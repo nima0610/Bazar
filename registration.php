@@ -1,28 +1,39 @@
 <?php
 require 'db.php';
 
+$error = '';
+$success = '';
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $role = $_POST['role'] ?? '';
 
-    // Prepare statement with bind parameters
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :email AND password = SHA2(:password, 256) AND user_role = :role");
-    $stmt->execute([
-        'email' => $email,
-        'password' => $password,
-        'role' => $role
-    ]);
+    // Hash password in PHP
+    $hashedPassword = hash('sha256', $password);
 
-    $user = $stmt->fetch();
+    // Check if user already exists
+    $checkStmt = $pdo->prepare("SELECT * FROM users WHERE username = :email");
+    $checkStmt->execute(['email' => $email]);
+    $existingUser = $checkStmt->fetch();
 
-    if ($user) {
-        echo "✅ Login successful. Welcome, " . htmlspecialchars($user['username']);
+    if ($existingUser) {
+        $error = "❌ User already exists.";
     } else {
-        $error = "❌ Invalid email or password or role.";
+        // Insert new user with hashed password
+        $insertStmt = $pdo->prepare("INSERT INTO users (username, password, user_role) VALUES (:email, :password, :role)");
+        $insertStmt->execute([
+            'email' => $email,
+            'password' => $hashedPassword,
+            'role' => $role
+        ]);
+
+        $success = "✅ Registration successful!";
     }
 }
+
 ?>
+
 
 
 
@@ -35,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <style>
         body {
             color: white;
-            background-image: url('img/bg.jpg');
+            background-image: url('seller/img/bg.jpg');
             background-size: cover;
             /* makes it fill the screen */
             background-repeat: no-repeat;
@@ -106,13 +117,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         button:hover {
             background-color: #218838;
         }
+
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .success-message {
+            color: lightgreen;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 
 <body>
     <div class="register">
 
-        <form method="POST" action="login.php">
+        <form method="POST" action="registration.php">
             <h1>
                 LOGIN<br>
             </h1>
@@ -136,15 +161,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <?php } ?>
         </form>
 
-        <?php if (!empty($success)) {
-            echo "<p style='color: lightgreen;'>$success</p>";
-            echo "
-    <script>
-        setTimeout(function() {
-            window.location.href = 'success.php';
-        }, 3000);
-    </script>";
-        } ?>
+        <?php if (!empty($success)) { ?>
+            <div class="success-message"><?php echo $success; ?></div>
+            <script>
+                setTimeout(function () {
+                    window.location.href = 'login.php';
+                }, 3000);
+            </script>
+        <?php } ?>
     </div>
 
 </body>
