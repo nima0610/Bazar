@@ -21,8 +21,8 @@
     <div class="main">
         <div class="side_options">
             <a href="#">Become a Seller</a>
-            <a href="#">Login</a>
-            <a href="#">Signup</a>
+            <a href="login.php">Login</a>
+            <a href="registration.php">Signup</a>
             <a href="#">Help and Support</a>
         </div>
         <div class="logo_main">
