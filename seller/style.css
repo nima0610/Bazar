@@ -4,15 +4,20 @@
     box-sizing: border-box;
 }
 
+html, body {
+    height: 100%;
+    background-color: #F0F4F8;
+}
+
 .main_box {
     
     display: flex;
-    width: 90%;
+    width: 100%;
     height: 80px;
-    margin: 15px auto;
+    margin: 0px auto;
     align-items: center;
-    border: 9px solid orange;
-    border-radius: 7px;
+    border: 1px solid orange;
+    border-radius: 1px;
 }
 
 .internal_box {
@@ -44,6 +49,8 @@
     align-items: center;
     margin-left: 20px;
     flex-grow: 1; /* MAKE FORM EXPAND */
+      border: 5px solid orange;
+    border-radius: 5px;
 }
 
 .internal_box form input {
@@ -64,42 +71,117 @@
 }
 
 .page_divider{
+    margin-top: 10px;
     display: flex;
-    height: 100%;
+    height: 70%;
     width: 100%;
-    background-color: rgb(255, 255, 255);
+    background-color: #F0F4F8;
+
 }
 
 .left_divided{
  
     width: 20%;
-    height: 50%;
+    height: 100%;
+    background-color: rgb(255, 255, 255);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 2px;
     padding: 2px;
     flex-wrap: wrap;
+    margin-left: 25px;
+     box-sizing: border-box;
 }
 
 .left_divided button{
     margin-top: 20px;
     width: 70%;
     background-color: orange;
-    padding: 20px;
-    
+    padding: 10px;
+    cursor: pointer; 
     border-radius: 5px;
 }
-
+.left_divided button:hover{
+    background-color: aqua;
+}
 .main_part{
     display: flex;
     width: 80%;
-    height: 50%;
-    background-color: white;
-    padding: 20px;
+    height: 100%;
+    background-color: #F0F4F8;
+    padding-left: 20px;
+    
 
 }
-.main_part img{
-    height: 50%;
-    width: 50%;
+.content-section {
+    display: none;  /* hidden by default */
+    width: 100%;    /* fill parent width */
+    height: 100%;   /* fill parent height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.content-section.active {
+    display: flex;  /* show active section as flex */
+}
+
+.grid-container {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+}
+
+.dashboard-grid {
+    grid-template-columns: repeat(2, 1fr); /* Dashboard: 2 columns */
+     grid-template-rows: repeat(2, 1fr); /* breaks dashboard into 2 rows halves  */
+}
+
+.orders-grid {
+    grid-template-columns: repeat(3, 1fr); /* Orders: 3 columns */
+}
+
+.grid-item {
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.grid-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Or fill, if you want stretch */
+}
+
+.nested-grid-container {
+    padding: 0; /* optional: remove padding */
+    display: flex;
+}
+
+.nested-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);  /* 2 columns */
+    grid-template-rows: repeat(2, 1fr);     /* 2 rows */
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+}
+
+.nested-item {
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.nested-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
