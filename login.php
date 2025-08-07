@@ -1,4 +1,5 @@
 <?php
+session_start();
 require 'db.php';
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -19,6 +20,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if ($user) {
         $success = "✅ Login successful. Welcome, " . htmlspecialchars($user['username']);
+        $user_role = $role;
+        $_SESSION['user_id'] = $user['user_id'];  // or your primary key column
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['user_role'] = $user['user_role'];
     } else {
         $error = "❌ Invalid email or password or role.";
     }
@@ -32,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <html>
 
 <head>
-    <title>REGISTRATION</title>
+    <title>LOGIN PAGE</title>
     <style>
         body {
             color: white;
@@ -139,10 +144,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <?php if (!empty($success)) {
             echo "<p style='color: lightgreen;'>$success</p>";
+            // Role-based redirection after 3 seconds
+            if ($user_role === 'admin') {
+                $redirectPage = 'admin.php';
+            } elseif ($user_role === 'seller') {
+                $redirectPage = 'seller/dashboard.php';
+            } elseif ($user_role === 'customer') {
+                $redirectPage = 'customer.php';
+            } else {
+                $redirectPage = 'index.php'; // fallback page
+            }
             echo "
     <script>
         setTimeout(function() {
-            window.location.href = 'index.php';
+            window.location.href = '$redirectPage';
         }, 3000);
     </script>";
         } ?>
