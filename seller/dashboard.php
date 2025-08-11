@@ -1,85 +1,48 @@
 <?php
 session_start();
 require 'db.php';
+require 'category.php';
+require 'product.php';
+
+// Create DB connection
+$db = new Database("localhost", "bazar", "root", "");
+
+// Create category and product objects
+$category = new Category($db);
+$product = new Product($db);
+
 try {
-    $stmt = $pdo->query("SELECT category_id, category_name FROM categories");
-    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
-}
+    // Fetch categories for dropdown or listing
+    $categories = $category->getAllCategories();
 
+    if ($_SERVER['REQUEST_METHOD'] === "POST") {
+        $sellerId = $_POST['seller'] ?? '';
+        $categoryName = $_POST['category'] ?? '';
+        $productName = $_POST['product'] ?? '';
+        $amount = $_POST['amount'] ?? '';
+        $quantity = $_POST['quantity'] ?? '';
+        $description = $_POST['description'] ?? '';
+        $images = $_FILES['images'] ?? null;
 
-if ($_SERVER['REQUEST_METHOD'] === "POST") {
-    $sellerid = $_POST['seller'] ?? '';
-    $categoryname = $_POST['category'] ?? '';
+        // Get category ID
+        $categoryId = $category->getCategoryIdByName($categoryName);
 
-    //to get the category id from categories
-
-    if ($categoryname) {
-        $stmt = $pdo->prepare("SELECT category_id FROM categories WHERE category_name = ?");
-        $stmt->execute([$categoryname]);
-        $categoryRow = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($categoryRow) {
-            $categoryid = $categoryRow['category_id'];
-        } else {
-            die("Invalid category selected.");
+        if (!$categoryId) {
+            throw new Exception("Invalid category selected.");
         }
-    } else {
-        die("Category not provided.");
-    }
 
-    //continue
+        // Add product (upload images + insert DB)
+        $results = $product->addProduct($sellerId, $categoryId, $productName, $amount, $quantity, $description, $images);
 
-    $productname = $_POST['product'] ?? '';
-    $amount = $_POST['amount'] ?? '';
-    $quantity = $_POST['quantity'] ?? '';
-    $description = $_POST['description'] ?? '';
-    $images = $_FILES['images'] ?? null;
-    // Folder where images will be saved
-    $uploadDir = 'uploads/products/';
-
-    // Create folder if it doesn't exist
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-
-    if ($images) {
-        foreach ($images['tmp_name'] as $index => $tmpName) {
-            $fileName = basename($images['name'][$index]);
-
-            // You may want to rename the file to avoid conflicts, e.g. add timestamp:
-            $newFileName = time() . '_' . $fileName;
-
-            $targetFilePath = $uploadDir . $newFileName;
-
-            // Move the uploaded file to your target folder
-            if (move_uploaded_file($tmpName, $targetFilePath)) {
-                $imageupload = "Uploaded: " . htmlspecialchars($newFileName) . "<br>";
-
-                $stmt = $pdo->prepare("INSERT INTO product (seller_id, category_id, product_name, product_amount, product_stock, description, product_image) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([
-                    $sellerid,
-                    $categoryid,
-                    $productname,
-                    $amount,
-                    $quantity,
-                    $description,
-                    $targetFilePath // This is the image path to store
-                ]);
-
-                $database_saved_mesg = "Product saved to database.<br>";
-
-                // Here you can save $targetFilePath to database as the image path
-            } else {
-                echo "Failed to upload: " . htmlspecialchars($fileName) . "<br>";
-            }
+        foreach ($results as $msg) {
+            echo $msg . "<br>";
         }
     }
-
+} catch (Exception $e) {
+    die("Error: " . $e->getMessage());
 }
-
 ?>
+
 
 
 
