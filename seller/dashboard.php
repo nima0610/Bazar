@@ -35,7 +35,7 @@ try {
         $results = $product->addProduct($sellerId, $categoryId, $productName, $amount, $quantity, $description, $images);
 
         foreach ($results as $msg) {
-            echo $msg . "<br>";
+            echo "<script>console.log(" . json_encode($msg) . ");</script>";
         }
     }
 } catch (Exception $e) {

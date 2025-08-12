@@ -55,7 +55,81 @@
             <div class="swiper-pagination"></div>
         </div> <!-- end swiper -->
     </section>
-    <script src="app.js"></script>
+
+    <div class="flash">
+        <h1>Flash Sale</h1>
+    </div>
+
+    <div class="advertisement">
+        <div class="grid-container dashboard-grid">
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/shoes.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Summer Shoes</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 2500</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 2750</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/uno.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Premium UNO cards</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 500</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 750</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/jacket.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Army Jacket</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 5500</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 6750</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/guitar.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Cort Guitar</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 25000</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 27999</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/gloves.avif" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Oven Gloves</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 2449</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 2999</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/cycle.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Kid's Cycle</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 8199</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 9899</p>
+                </div>
+            </div>
+        </div>
+        <script src="app.js"></script>
 </body>
 
 </html>
