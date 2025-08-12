@@ -31,6 +31,7 @@ class Product
                     "INSERT INTO product (seller_id, category_id, product_name, product_amount, product_stock, description, product_image) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     [$sellerId, $categoryId, $productName, $amount, $quantity, $description, $targetFilePath]
                 );
+
                 // $results[] = "Uploaded and saved: " . htmlspecialchars($newFileName);
             } else {
                 $results[] = "Failed to upload: " . htmlspecialchars($originalName);
