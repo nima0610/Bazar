@@ -153,16 +153,23 @@ body{
     overflow: hidden;
 }
 .grid-item .image-container {
-    flex: 7; /* 70% of the height */
+    flex: 7;
     overflow: hidden;
     margin-top: 5px;
     padding: 3px;
+    display: flex;            /* enable flex */
+    align-items: center;      /* vertical center */
+    justify-content: center;  /* horizontal center */
 }
+
 .grid-item .image-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: auto;             /* keep original width proportionally */
+    height: 100%;            /* fill container height */
+    object-fit: cover;       /* keep aspect ratio, crop if needed */
+    object-position: center; /* center the image */
+    display: block;          /* remove inline spacing issues */
 }
+
 .grid-item .info-container {
     flex: 3; /* 30% of the height */
     padding: 2px;

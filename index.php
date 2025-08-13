@@ -1,6 +1,7 @@
 <?php
 require_once "database.php";
 require_once "product.php";
+require_once "categories.php";
 
 // Change these to your DB credentials
 $host = "localhost";
@@ -14,8 +15,11 @@ $db = new Database($host, $dbname, $user, $pass);
 // Create Product instance
 $productObj = new Product($db);
 
+$categoryobj = new Categories($db);
+
 // Fetch products ordered by sold quantity descending
 $products = $productObj->getTopProductsBySold();
+$categories = $categoryobj->getCategories();
 ?>
 
 
@@ -233,7 +237,7 @@ $products = $productObj->getTopProductsBySold();
     <br>
 
     <div class="flash">
-        <h1>Flash Sale</h1>
+        <h1>Most Sold Items</h1>
     </div>
 
     <div class="advertisement">
@@ -265,7 +269,31 @@ $products = $productObj->getTopProductsBySold();
         </div>
     </div>
 
-    <!-- Generate JS array once after loop -->
+    <div class="flash">
+        <h1>Categories</h1>
+    </div>
+
+    <div class="advertisement">
+        <div class="grid-container dashboard-grid">
+            <?php foreach ($categories as $category): ?>
+                <div class="grid-item">
+                    <div class="image-container">
+                        <?php
+                        // Separate folder and filename
+                        $folder = 'seller/uploads/products/';
+                        $filename = basename($category['category_image']); // 1754894290_Screenshot (3).png
+                        ?>
+                        <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                            alt="<?php echo htmlspecialchars($categoryt['category_name']); ?>" />
+                    </div>
+                    <div class="info-container">
+                        <h3><?php echo htmlspecialchars($category['category_name']); ?></h3>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+
+        </div>
+    </div>
 
 
     <script src="app.js"></script>
