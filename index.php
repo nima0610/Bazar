@@ -1,3 +1,25 @@
+<?php
+require_once "database.php";
+require_once "product.php";
+
+// Change these to your DB credentials
+$host = "localhost";
+$dbname = "bazar";
+$user = "root";
+$pass = "";
+
+// Create DB connection
+$db = new Database($host, $dbname, $user, $pass);
+
+// Create Product instance
+$productObj = new Product($db);
+
+// Fetch products ordered by sold quantity descending
+$products = $productObj->getTopProductsBySold();
+?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -129,7 +151,126 @@
                 </div>
             </div>
         </div>
-        <script src="app.js"></script>
+    </div>
+
+    <br>
+
+    <div class="flash">
+        <h1>Flash Sale</h1>
+    </div>
+
+    <div class="advertisement">
+        <div class="grid-container dashboard-grid">
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/shoes.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Summer Shoes</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 2500</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 2750</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/uno.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Premium UNO cards</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 500</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 750</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/jacket.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Army Jacket</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 5500</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 6750</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/guitar.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Cort Guitar</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 25000</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 27999</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/gloves.avif" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Oven Gloves</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 2449</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 2999</p>
+                </div>
+            </div>
+            <div class="grid-item">
+                <div class="image-container">
+                    <img src="img/cycle.jpg" alt="Product Image" />
+                </div>
+                <div class="info-container">
+                    <h3>Kid's Cycle</h3>
+                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 8199</p>
+                    <p style="color:red; font-size: 20px;text-decoration: line-through;
+    color: gray;">Rs 9899</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br>
+
+    <div class="flash">
+        <h1>Flash Sale</h1>
+    </div>
+
+    <div class="advertisement">
+        <div class="grid-container dashboard-grid">
+            <?php foreach ($products as $product): ?>
+                <div class="grid-item">
+                    <div class="image-container">
+                        <?php
+                        // Separate folder and filename
+                        $folder = 'seller/uploads/products/';
+                        $filename = basename($product['product_image']); // 1754894290_Screenshot (3).png
+                        ?>
+                        <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                            alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                    </div>
+                    <div class="info-container">
+                        <h3><?php echo htmlspecialchars($product['product_name']); ?></h3>
+                        <p style="color:red; font-size: 24px; position: relative; left: 10px;">
+                            Rs <?php echo number_format($product['product_amount']); ?>
+                        </p>
+                        <p style="font-size: 20px; text-decoration: line-through; color: gray;">
+                            Rs <?php echo number_format($product['product_amount']); ?>
+                        </p>
+                        <p><strong>Sold: </strong><?php echo (int) $product['sold']; ?></p>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+
+        </div>
+    </div>
+
+    <!-- Generate JS array once after loop -->
+
+
+    <script src="app.js"></script>
+
+
 </body>
 
 </html>
