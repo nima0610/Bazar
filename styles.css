@@ -8,6 +8,35 @@ body{
   background-color: rgb(113, 112, 112);
 }
 
+@media (min-width: 1025px) {
+  .container {
+    max-width: 1200px;
+    margin: auto;
+  }
+}
+
+/* Medium screens (tablets) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .grid-item {
+    width: 48%; /* Two items per row */
+  }
+}
+
+/* Small screens (mobile landscape) */
+@media (max-width: 768px) and (min-width: 481px) {
+  .grid-item {
+    width: 100%; /* Single column */
+  }
+}
+
+/* Extra small screens (mobile portrait) */
+@media (max-width: 480px) {
+  .grid-item {
+    width: 100%;
+    font-size: 14px; /* Smaller text */
+  }
+}
+
 .main {
     display: flex;
     position: relative;
@@ -151,7 +180,13 @@ body{
     flex-direction: column; /* add this */
     border-radius: 10px;
     overflow: hidden;
+     transition: transform 0.2s;
 }
+
+.grid-item:hover {
+    transform: scale(1.05); /* optional hover effect */
+}
+
 .grid-item .image-container {
     flex: 7;
     overflow: hidden;

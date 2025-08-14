@@ -243,7 +243,9 @@ $categories = $categoryobj->getCategories();
     <div class="advertisement">
         <div class="grid-container dashboard-grid">
             <?php foreach ($products as $product): ?>
-                <div class="grid-item">
+
+                <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+
                     <div class="image-container">
                         <?php
                         // Separate folder and filename
@@ -264,6 +266,7 @@ $categories = $categoryobj->getCategories();
                         <p><strong>Sold: </strong><?php echo (int) $product['sold']; ?></p>
                     </div>
                 </div>
+
             <?php endforeach; ?>
 
         </div>

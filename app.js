@@ -13,3 +13,12 @@ new Swiper("#swiper-1", {
     },
     loop: true
 });
+   
+document.querySelectorAll('.grid-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const id = item.dataset.id;
+        window.location.href = `product_details.php?id=${id}`;
+    });
+});
+
+
