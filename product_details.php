@@ -64,6 +64,9 @@ if (isset($_GET['id'])) {
     <div class="product_storage">
         <div class="product_image">
             <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>" alt="Product Image">
+            <div class="swipeitpart">
+                <h2>This part is for swiper to show alternatives</h2>
+            </div>
         </div>
         <div class="product_descript">
             <h1>
@@ -78,6 +81,22 @@ if (isset($_GET['id'])) {
                 <p style="color:red; font-size: 20px;text-decoration: line-through;
     color: gray;"> Rs <?php echo htmlspecialchars($productdetail['product_amount']); ?></p>
             </h1>
+
+            <form id="product-form" method="POST" action="purchase.php">
+                <div class="quantity-wrapper">
+                    <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($product_id); ?>">
+                    <label>Quantity :</label>
+                    <div class="quantity">
+                        <button type="button" class="decrease">-</button>
+                        <input type="text" name="quantity" value="1">
+                        <button type="button" class="increase">+</button>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="buy-now">Buy Product</button>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+            </form>
 
         </div>
         <div class="product_second_descript">
@@ -95,6 +114,36 @@ if (isset($_GET['id'])) {
     <script>
         const productImage = "<?php echo htmlspecialchars($productdetail['product_image']); ?>";
         console.log("Product Image URL:", 'seller/' + productImage);
+
+
+
+        document.querySelector(".increase").addEventListener("click", function () {
+            let input = document.querySelector(".quantity input");
+            input.value = parseInt(input.value) + 1;
+        });
+
+        document.querySelector(".decrease").addEventListener("click", function () {
+            let input = document.querySelector(".quantity input");
+            let value = parseInt(input.value);
+            if (value > 1) { // prevent going below 1
+                input.value = value - 1;
+            }
+        });
+
+
+        document.querySelector('.buy-now').addEventListener('click', () => {
+            const form = document.getElementById('product-form');
+            // Optional: you can modify hidden input or validate here
+            form.action = 'purchase.php';   // target PHP file
+            form.submit();             // submit the form with POST
+        });
+
+        document.querySelector('.add-to-cart').addEventListener('click', () => {
+            const form = document.getElementById('product-form');
+            form.action = 'add_to_cart.php'; // separate PHP file for cart
+            form.submit();
+        });
+
     </script>
 
 </body>

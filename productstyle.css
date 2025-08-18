@@ -133,22 +133,26 @@ body{
     width: 90%;      
 
     margin: 20px auto;
-    height: 800px;
+    height: 400px;
     background-color: #fff;
 }
 
 .product_image {
-    background-color: aqua;
-    flex: 1; /* Image takes 1 portion of space */
+    flex: 2.0; /* Image takes 1 portion of space */
 }
 
 .product_image img {
     width: 100%;
-    max-width: 300px; /* Restrict image size */
-    height: auto;
+    /* Restrict image size */
+    height: 80%;
     border-radius: 10px;
-    object-fit: cover;
+    object-fit:inherit;
     display: block;
+    flex: 4;
+}
+
+.swipeitpart{
+  flex:1;
 }
 
 .product_descript {
@@ -177,8 +181,81 @@ body{
     margin: 5px 0;
     font-size: 16px;
     line-height: 1.5;
+}.quantity {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
+.quantity button {
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  font-weight: bold;
+  border: 1px solid #ccc;
+  background: #f8f8f8;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: 0.2s;
+}
+
+.quantity button:hover {
+  background: #ddd;
+}
+.quantity-wrapper label {
+  font-weight: bold;   
+  font-size: 27px;    
+  margin-right: 10px; 
+}
+
+.quantity input {
+  width: 50px;
+  height: 30px;
+  text-align: center;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.quantity-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* space between label and buttons */
+}
+.action-buttons {
+  display: flex;
+  gap: 15px; /* space between buttons */
+  margin-top: 20px;
+}
+
+.action-buttons button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+/* Add to Cart button */
+.add-to-cart {
+  background-color: #ff9800; /* orange like Daraz */
+  color: white;
+}
+
+.add-to-cart:hover {
+  background-color: #e68900;
+}
+
+/* Buy Now button */
+.buy-now {
+  background-color: #5c52b8; /* Daraz reddish-orange */
+  color: rgb(255, 255, 255);
+}
+
+.buy-now:hover {
+  background-color: #2424d2;
+}
 /* Responsive: stack on small screens */
 @media (max-width: 768px) {
     .product_storage {
