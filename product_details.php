@@ -12,6 +12,8 @@ $db = new Database($host, $dbname, $user, $pass);
 $details = new Details($db);
 
 
+
+
 if (isset($_GET['id'])) {
     $product_id = $_GET['id'];
 
@@ -42,7 +44,19 @@ if (isset($_GET['id'])) {
 </head>
 
 <body>
-
+    <?php if (isset($_GET['success'])): ?>
+        <div id="success-message" style="background:#d4edda;color:#155724;padding:10px;margin:10px 0;border-radius:5px;">
+            ✅ Successfully purchased product!
+        </div>
+    <?php elseif (isset($_GET['error']) && $_GET['error'] == 1): ?>
+        <div id="success-message" style="background:#f8d7da;color:#721c24;padding:10px;margin:10px 0;border-radius:5px;">
+            ❌ Not enough stock available!
+        </div>
+    <?php elseif (isset($_GET['error']) && $_GET['error'] == 2): ?>
+        <div id="success-message" style="background:#f8d7da;color:#721c24;padding:10px;margin:10px 0;border-radius:5px;">
+            ❌ Product not found.
+        </div>
+    <?php endif; ?>
     <div class="main">
         <div class="side_options">
             <a href="#">Become a Seller</a>
@@ -143,6 +157,11 @@ if (isset($_GET['id'])) {
             form.action = 'add_to_cart.php'; // separate PHP file for cart
             form.submit();
         });
+
+        setTimeout(() => {
+            const msg = document.getElementById('success-message');
+            if (msg) msg.style.display = 'none';
+        }, 2000);
 
     </script>
 
