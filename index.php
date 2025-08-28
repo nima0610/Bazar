@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once "database.php";
 require_once "product.php";
 require_once "categories.php";
@@ -44,6 +45,10 @@ $categories = $categoryobj->getCategories();
 </head>
 
 <body>
+
+    <script>
+        console.log("the user id is ", <?php echo $_SESSION['user_id']; ?>);
+        console.log("the user name is", <?php echo json_encode($_SESSION['username']); ?>);    </script>
     <div class="main">
         <div class="side_options">
             <a href="#">Become a Seller</a>

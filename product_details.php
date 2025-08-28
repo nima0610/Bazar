@@ -1,4 +1,6 @@
 <?php
+session_start();
+$isLoggedIn = isset($_SESSION['user_id']);
 require_once 'database.php';
 require_once 'details_product.php';
 
@@ -145,11 +147,21 @@ if (isset($_GET['id'])) {
         });
 
 
-        document.querySelector('.buy-now').addEventListener('click', () => {
+        document.querySelector('.buy-now').addEventListener('click', (e) => {
+            e.preventDefault(); // ✅ stop the form from submitting immediately
+
+            const isLoggedIn = <?php echo json_encode($isLoggedIn); ?>;
+
+            if (!isLoggedIn) {
+                alert("You have to login first.");
+                window.location.href = "login.php"; // redirect to login
+                return;
+            }
+
+            // If logged in -> submit form
             const form = document.getElementById('product-form');
-            // Optional: you can modify hidden input or validate here
-            form.action = 'purchase.php';   // target PHP file
-            form.submit();             // submit the form with POST
+            form.action = 'purchase.php';
+            form.submit();
         });
 
         document.querySelector('.add-to-cart').addEventListener('click', () => {

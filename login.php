@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             } elseif ($role === 'seller') {
                 header("Location: seller/dashboard.php");
             } elseif ($role === 'customer') {
-                header("Location: customer/dashboard.php");
+                header("Location: index.php");
             }
             exit();
         } else {

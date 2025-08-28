@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once 'database.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -43,6 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <?php
 require_once 'database.php';
 require_once 'details_product.php';
+require_once 'customer_details.php';
 
 $host = "localhost";
 $dbname = "bazar";
@@ -53,6 +55,16 @@ $db = new Database($host, $dbname, $user, $pass);
 
 $details = new Details($db);
 
+$customer = new CustomerDetails($db);
+
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $customer_info = $customer->getCustomerDetails($user_id);
+
+
+} else {
+    echo "NO CUSTOMER FOUND OF THIS USER ID";
+}
 
 
 
@@ -86,7 +98,10 @@ if (isset($product_id)) {
 </head>
 
 <body>
-
+    <script>
+        console.log("the user id is ", <?php echo $_SESSION['user_id']; ?>)
+        console.log("the user name is", <?php echo json_encode($_SESSION['username']); ?>);
+    </script>
     <?php if (isset($_GET['success'])): ?>
         <div id="success-message" style="background:#d4edda;color:#155724;padding:10px;margin:10px 0;border-radius:5px;">
             ✅ Successfully purchased product!

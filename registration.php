@@ -231,31 +231,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <!-- Admin Fields -->
                 <div class="role-field" id="admin-fields" style="display: none;">
                     <label>Phone Number:</label>
-                    <input type="text" name="admin_contact" pattern="[0-9]{10}" placeholder="10-Digit Number">
+                    <input type="text" name="admin_contact" pattern="[0-9]{10}" placeholder="10-Digit Number" required>
                 </div>
 
                 <!-- Seller Fields -->
                 <div class="role-field" id="seller-fields" style="display: none;">
                     <label>Shop Name:</label>
-                    <input type="text" name="shop_name" placeholder="Enter your shop name">
+                    <input type="text" name="shop_name" placeholder="Enter your shop name" required>
 
                     <label>Shop Address:</label>
-                    <input type="text" name="shop_location" placeholder="Enter your Shop Address">
+                    <input type="text" name="shop_location" placeholder="Enter your Shop Address" required>
 
                     <label>Contact No:</label>
-                    <input type="tel" name="phone_number" pattern="[0-9]{10}" placeholder="10-digit number">
+                    <input type="tel" name="phone_number" pattern="[0-9]{10}" placeholder="10-digit number" required>
 
                     <label>Upload QR Code:</label>
-                    <input type="file" name="qr_code" accept="image/*">
+                    <input type="file" name="qr_code" accept="image/*" required>
                 </div>
 
                 <!-- Customer Fields -->
                 <div class="role-field" id="customer-fields" style="display: none;">
                     <label>Full Name:</label>
-                    <input type="text" name="full_name" placeholder="Enter your full name">
+                    <input type="text" name="full_name" placeholder="Enter your full name" required>
 
                     <label for="district">District</label>
-                    <select name="district" id="district">
+                    <select name="district" id="district" required>
                         <option value="">-- Select District --</option>
                         <?php
                         $districts = $pdo->query("SELECT * FROM districts ORDER BY name ASC")->fetchAll();
@@ -266,12 +266,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     </select>
 
                     <label for="location">Location</label>
-                    <select name="location" id="location">
+                    <select name="location" id="location" required>
                         <option value="">-- Select Location --</option>
                     </select>
 
                     <label>Contact No:</label>
-                    <input type="text" name="phone_numberrr" pattern="[0-9]{10}" placeholder="10-digit number">
+                    <input type="text" name="phone_numberrr" pattern="[0-9]{10}" placeholder="10-digit number" required>
                 </div>
 
                 <input type="submit" value="REGISTER">
