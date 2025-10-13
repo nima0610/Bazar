@@ -64,7 +64,7 @@ if (isset($_GET['id'])) {
             <a href="#">Become a Seller</a>
             <a href="login.php">Login</a>
             <a href="registration.php">Signup</a>
-            <a href="#">Help and Support</a>
+            <a href="index.php">Home</a>
         </div>
         <div class="logo_main">
             <img src="assets/bazari.png">
@@ -81,7 +81,19 @@ if (isset($_GET['id'])) {
         <div class="product_image">
             <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>" alt="Product Image">
             <div class="swipeitpart">
-                <h2>This part is for swiper to show alternatives</h2>
+                <div class="firstimg">
+                    <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>"
+                        alt="Product Image">
+                </div>
+                <div class="secondimg">
+                    <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>"
+                        alt="Product Image">
+                </div>
+                <div class="thirdimg">
+                    <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>"
+                        alt="Product Image">
+                </div>
+
             </div>
         </div>
         <div class="product_descript">
@@ -98,7 +110,7 @@ if (isset($_GET['id'])) {
     color: gray;"> Rs <?php echo htmlspecialchars($productdetail['product_amount']); ?></p>
             </h1>
 
-            <form id="product-form" method="POST" action="purchase.php">
+            <form id="product-form" method="GET" action="purchase.php">
                 <div class="quantity-wrapper">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($product_id); ?>">
                     <label>Quantity :</label>

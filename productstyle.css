@@ -152,6 +152,20 @@ body{
 }
 
 .swipeitpart{
+  margin-top: 3px;
+  padding: 2px;
+  gap: 2px;
+  flex:1;
+  display:flex;
+}
+
+.firstimg{
+  flex:1;
+}
+.secondimg{
+  flex:1;
+}
+.thirdimg{
   flex:1;
 }
 

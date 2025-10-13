@@ -2,8 +2,19 @@
 session_start();
 require_once 'database.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $product_id = $_POST['product_id'] ?? null;
+if ($_SERVER["REQUEST_METHOD"] == "GET") {
+    $product_id = $_GET['product_id'] ?? null;
+    $quantity = (int) ($_GET['quantity'] ?? 0);
+
+
+    echo "<script>
+        console.log('Product ID:', " . json_encode($product_id) . ");
+        console.log('Quantity:', " . json_encode($quantity) . ");
+    </script>";
+}
+
+/*if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $product_id = $_POST['product_id'] ?? null; //?? null =>exists and is not null, use its value; otherwise, use null
     $quantity = (int) ($_POST['quantity'] ?? 0);
 
     if ($product_id && $quantity > 0) {
@@ -38,6 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 }
+    */
 ?>
 
 
@@ -60,6 +72,21 @@ $customer = new CustomerDetails($db);
 if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
     $customer_info = $customer->getCustomerDetails($user_id);
+
+    // Fetch district_id and location_id into separate variables
+    $district_id = $customer_info['district_id'];
+    $location_id = $customer_info['location_id'];
+
+    $district_name = $customer->getDistrictName($district_id);
+    $location_name = $customer->getLocationName($location_id);
+
+    echo "<script>
+            console.log('District ID:', " . json_encode($district_id) . ");
+            console.log('Location ID:', " . json_encode($location_id) . ");
+            console.log('District ID:', " . json_encode($district_name) . ");
+            console.log('Location ID:', " . json_encode($location_name) . ");
+        </script>";
+
 
 
 } else {
@@ -169,6 +196,8 @@ if (isset($product_id)) {
     <script>
         const productImage = "<?php echo htmlspecialchars($productdetail['product_image']); ?>";
         console.log("Product Image URL:", 'seller/' + productImage);
+
+
 
 
 
