@@ -12,7 +12,7 @@ class CustomerDetails
     {
         $sql = "SELECT * FROM customers WHERE user_id = ?"; // singular table name
         $stmt = $this->db->query($sql, [$user_id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC); // 
+        return $stmt->fetch(PDO::FETCH_ASSOC); // will be false 
     }
     public function getDistrictName($district_id)
     {

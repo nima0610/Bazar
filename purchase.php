@@ -72,19 +72,29 @@ $customer = new CustomerDetails($db);
 if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
     $customer_info = $customer->getCustomerDetails($user_id);
+    $product_info = $details->getProductDetails($product_id);
+    $product_seller = $product_info['seller_id'];
+    $seller_info = $details->getSellerName($product_seller);
 
     // Fetch district_id and location_id into separate variables
+    $seller_name = $seller_info['shop_name'];
     $district_id = $customer_info['district_id'];
     $location_id = $customer_info['location_id'];
-
+    $customer_name = $customer_info['full_name'];
+    $customer_phone = $customer_info['phone_number'];
     $district_name = $customer->getDistrictName($district_id);
     $location_name = $customer->getLocationName($location_id);
 
     echo "<script>
+    console.log('seller id is :', " . json_encode($product_seller) . ");
+      console.log('seller name is :', " . json_encode($seller_name) . ");
             console.log('District ID:', " . json_encode($district_id) . ");
             console.log('Location ID:', " . json_encode($location_id) . ");
             console.log('District ID:', " . json_encode($district_name) . ");
             console.log('Location ID:', " . json_encode($location_name) . ");
+            
+            
+            console.log('customer name:', " . json_encode($customer_name) . ");
         </script>";
 
 
@@ -125,6 +135,46 @@ if (isset($product_id)) {
 </head>
 
 <body>
+
+
+
+    <div class="customer_detail">
+        <div class="map_img">
+            <img src="img/mapp.png" alt="Product Image" />
+        </div>
+        <div class="user_detail">
+            <div class="first_line">
+                <h2>
+                    <?php
+                    echo $customer_name;
+                    ?>
+                </h2>
+
+                <h3>
+                    <?php
+                    echo $customer_phone;
+                    ?>
+                </h3>
+            </div>
+
+            <div class="second_line">
+                <h3>
+                    <p>HOME</p>
+                </h3>
+                <h3>
+                    <?php
+                    echo $location_name, ",", $district_name;
+                    ?>
+                </h3>
+            </div>
+
+            <div class="third_line">
+                <h3>Collect your parcel from the nearest Bazar Pickup point with a reduced shipping fee.</h3>
+            </div>
+
+        </div>
+    </div>
+
     <script>
         console.log("the user id is ", <?php echo $_SESSION['user_id']; ?>)
         console.log("the user name is", <?php echo json_encode($_SESSION['username']); ?>);

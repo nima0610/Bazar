@@ -37,6 +37,67 @@ body{
   }
 }
 
+
+.customer_detail {
+  padding: 20px 20px 10px 20px; /* remove bottom padding */
+  display: flex;
+  width: 70%;
+  height: 160px;
+  margin: 0 auto; 
+}
+
+.map_img {
+  flex: 0 0 10%; /* takes 20% width */
+  background-color: whitesmoke; /* optional, just to visualize */
+}
+.map_img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* keeps full image visible (no cropping) */
+  object-position: top; /* aligns it to the top part */
+  display: block; /* removes bottom gap */
+}
+
+.user_detail {
+  flex: 0 0 90%; /* takes 80% width */
+  background-color: whitesmoke; /* optional */
+}
+.user_detail h2{
+  position: relative;
+  left: 10px;
+}
+.first_line,
+ .second_line,
+ .third_line{
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+.first_line h3{
+  position: relative;
+  left: 30px;
+  top: 5px;
+  font-weight: normal;
+}
+.second_line h3{
+  position: relative;
+  left: 10px;
+}
+.second_line p{
+  position: relative;
+  background-color: #2424d2;
+    padding: 2px;
+    color: white; 
+  border: 3px;
+  border-radius: 2px;
+
+}
+.third_line h3{
+  position: relative;
+  left: 10px;
+  color: #3636cd;
+}
+
 .main {
     display: flex;
     position: relative;
@@ -129,10 +190,9 @@ body{
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 10px;
-       max-width: 1200px; 
-    width: 90%;      
-
-    margin: 20px auto;
+    max-width: 1200px; 
+    width: 70%;      
+    margin: 0 auto;
     height: 400px;
     background-color: #fff;
 }

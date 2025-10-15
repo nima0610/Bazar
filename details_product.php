@@ -17,6 +17,13 @@ class Details
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function getSellerName($product_seller)
+    {
+        $sql = "SELECT * FROM seller WHERE seller_id = ?";
+        $stmt = $this->db->query($sql, [$product_seller]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     // Fetch similar products by category
     /*public function getSimilarProducts($category_id, $exclude_product_id)
     {
