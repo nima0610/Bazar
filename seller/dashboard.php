@@ -11,18 +11,40 @@ $db = new Database("localhost", "bazar", "root", "");
 $category = new Category($db);
 $product = new Product($db);
 
+
+
 try {
     // Fetch categories for dropdown or listing
     $categories = $category->getAllCategories();
 
     if ($_SERVER['REQUEST_METHOD'] === "POST") {
         $sellerId = $_POST['seller'] ?? '';
+        $seller_details = $product->getSellerDetails($sellerId);
+        $seller_id = $seller_details['seller_id'];
+
+
         $categoryName = $_POST['category'] ?? '';
         $productName = $_POST['product'] ?? '';
         $amount = $_POST['amount'] ?? '';
         $quantity = $_POST['quantity'] ?? '';
         $description = $_POST['description'] ?? '';
-        $images = $_FILES['images'] ?? null;
+        $uploadedFiles = $_FILES['images'];
+        $imageNames = [];
+        $uploadDir = 'uploads/products/'; // folder where files will be saved
+
+
+        foreach ($uploadedFiles['tmp_name'] as $index => $tmpName) {
+            if ($uploadedFiles['error'][$index] === UPLOAD_ERR_OK) {
+                $originalName = basename($uploadedFiles['name'][$index]);
+                $newFileName = uniqid() . '_' . $originalName;
+                $targetPath = $uploadDir . $newFileName;  // full path to move file
+                // Move file
+                if (move_uploaded_file($tmpName, $targetPath)) {
+                    $imageNames[] = $uploadDir . $newFileName; // store path for DB/display
+                }
+            }
+        }
+        $imagesCommaSeparated = implode(',', $imageNames);
 
         // Get category ID
         $categoryId = $category->getCategoryIdByName($categoryName);
@@ -32,7 +54,7 @@ try {
         }
 
         // Add product (upload images + insert DB)
-        $results = $product->addProduct($sellerId, $categoryId, $productName, $amount, $quantity, $description, $images);
+        $results = $product->addProduct($seller_id, $categoryId, $productName, $amount, $quantity, $description, $imagesCommaSeparated);
 
         foreach ($results as $msg) {
             echo "<script>console.log(" . json_encode($msg) . ");</script>";

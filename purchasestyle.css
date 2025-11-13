@@ -97,6 +97,72 @@ body{
   left: 10px;
   color: #3636cd;
 }
+.product_image {
+    flex: 2 1 0;
+    max-width: 50%;
+    position: relative; /* needed for Swiper pagination */
+    height: 400px; /* fixed height */
+}
+.mySwiper {
+  position: relative;
+  width: 100%;
+  height: 300px;
+}
+
+.mySwiper .swiper {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.mySwiper .swiper-slide img {
+ width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mySwiper .swiper-pagination {
+  position: absolute !important;
+  bottom: 0 !important;
+  top: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+
+
+
+.swiper-button-next, .swiper-button-prev {
+    color: #fff; /* arrow color */
+    background-color: rgba(0,0,0,0.5); /* semi-transparent background */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 50%; /* vertical center */
+    transform: translateY(-50%);
+    transition: 0.3s;
+    z-index: 10;
+}
+.swiper-button-next {
+    right: -20px; /* outside slider */
+}
+
+.swiper-button-prev {
+    left: -20px;
+}
+.swiper-button-next:hover, .swiper-button-prev:hover {
+    background-color: #ff9800; /* highlight on hover */
+    color: #fff;
+}
+
+.swiper-button-next i, .swiper-button-prev i {
+    font-size: 18px;
+    
+    /* arrow size */
+}
+
 
 .main {
     display: flex;
@@ -130,7 +196,14 @@ body{
   position: relative;
   width: 100%;
 }
-
+.sold_left {
+  display: flex;
+  gap: 140px;
+}
+.discount {
+  display: flex;
+  gap: 20px;
+}
 .search_bar form {
   width: 480px;
   max-width: 480px;
@@ -185,6 +258,7 @@ body{
 
 .product_storage {
     display: flex;
+    flex-wrap: wrap; /*  allows a div to take its own row */
     align-items: flex-start; /* Align image and text at top */
     gap: 20px; /* Space between image and description */
     padding: 20px;
@@ -193,10 +267,33 @@ body{
     max-width: 1200px; 
     width: 70%;      
     margin: 0 auto;
-    height: 400px;
+    height: 450px;
     background-color: #fff;
 }
-
+.seller_home{
+    flex: 0 0 100%; /* ✅ takes full width of the row */
+    box-sizing: border-box;
+}
+.seller_home h2 {
+  display: flex;
+  align-items: center; /* vertically align logo and text */
+  gap: 10px; /* space between logo and text */
+  font-size: 24px;
+}
+.swiper-slide img {
+    width: 100%;       /* image fills the slide width */
+    max-width: 100%;   /* prevent it from stretching beyond container */
+    height: auto;      /* maintain aspect ratio */
+    object-fit: contain; /* fit image properly inside slide */
+    border-radius: 10px;
+    display: block;    /* remove any inline spacing issues */
+}
+.seller_home h2 img {
+  width: 40px;   /* adjust as you like */
+  height: 40px;
+  border-radius: 50%; /* makes logo circular if it’s square */
+  object-fit: cover;
+}
 .product_image {
     flex: 2.0; /* Image takes 1 portion of space */
 }
@@ -204,7 +301,7 @@ body{
 .product_image img {
     width: 100%;
     /* Restrict image size */
-    height: 80%;
+    height: 70%;
     border-radius: 10px;
     object-fit:inherit;
     display: block;

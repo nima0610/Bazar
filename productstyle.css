@@ -137,19 +137,72 @@ body{
     background-color: #fff;
 }
 
+.sold_left {
+  display: flex;
+  gap: 140px;
+}
+.discount {
+  display: flex;
+  gap: 20px;
+}
 .product_image {
-    flex: 2.0; /* Image takes 1 portion of space */
+    flex: 2 1 0;
+    max-width: 50%;
+    height: 300px; /* fixed height */
+    position: relative;
+    overflow: hidden; /* important to hide extra parts if cropped */s
 }
 
-.product_image img {
+.mySwiper {
     width: 100%;
-    /* Restrict image size */
-    height: 80%;
-    border-radius: 10px;
-    object-fit:inherit;
-    display: block;
-    flex: 4;
+    height: 100%;
 }
+
+.swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* fills container while maintaining aspect ratio */
+    display: block;
+}
+
+
+.swiper-button-next, .swiper-button-prev {
+    color: #fff; /* arrow color */
+    background-color: rgba(0,0,0,0.5); /* semi-transparent background */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 50%; /* vertical center */
+    transform: translateY(-50%);
+    transition: 0.3s;
+    z-index: 10;
+}
+.swiper-button-next {
+    right: -20px; /* outside slider */
+}
+
+.swiper-button-prev {
+    left: -20px;
+}
+.swiper-button-next:hover, .swiper-button-prev:hover {
+    background-color: #ff9800; /* highlight on hover */
+    color: #fff;
+}
+
+.swiper-button-next i, .swiper-button-prev i {
+    font-size: 18px; /* arrow size */
+}
+
+
 
 .swipeitpart{
   margin-top: 3px;
@@ -175,13 +228,41 @@ body{
     flex-direction: column;
     justify-content: flex-start;
 }
-.product_second_descript{
-    flex: 1 1 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+.product_second_descript {
+  border-left: 1px solid #ccc;
+  padding-left: 20px;
+  margin-left: 20px;
+  margin-top: -20px;   /* cancel the top padding */
+  margin-bottom: -20px; /* cancel the bottom padding */
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-self: stretch;
 }
 
+.for_gap {
+  padding: 20px 0; /* 20px top & bottom, 0 left & right */
+  gap: 5px;
+}
+
+.seller_home{
+    flex: 0 0 100%; /* ✅ takes full width of the row */
+    box-sizing: border-box;
+    margin-top: 20px;
+}
+.seller_home h2 {
+  display: flex;
+  align-items: center; /* vertically align logo and text */
+  gap: 5px; /* space between logo and text */
+  font-size: 20px;
+}
+.seller_home h2 img {
+  width: 30px;   /* adjust as you like */
+  height: 30px;
+  border-radius: 50%; /* makes logo circular if it’s square */
+  object-fit: cover;
+}
 .product_descript h1 {
     margin: 0 0 10px 0;
     font-size: 28px;
@@ -250,6 +331,68 @@ body{
   cursor: pointer;
   transition: 0.2s ease-in-out;
 }
+
+.advertisement
+{
+  display: grid;
+  height: 300px;
+  width: 100%;
+  background-color: orange;
+  /*padding-left: 13px;*/
+  margin-left: 20px;
+  border: 2px solid orange;
+  border-radius: 9px;
+}
+
+.grid-container{
+ display: grid;
+    width: 100%;
+    height: 300px;
+    padding: 10px;
+    gap: 5px;
+}
+.dashboard-grid {
+    grid-template-columns: repeat(6, 1fr); /* Dashboard: 2 columns */
+    
+}
+.grid-item {
+   background-color: white;
+    display: flex;
+    flex-direction: column; /* add this */
+    border-radius: 10px;
+    overflow: hidden;
+     transition: transform 0.2s;
+}
+
+.grid-item:hover {
+    transform: scale(1.05); /* optional hover effect */
+}
+
+.grid-item .image-container {
+    flex: 7;
+    overflow: hidden;
+    margin-top: 5px;
+    padding: 3px;
+    display: flex;            /* enable flex */
+    align-items: center;      /* vertical center */
+    justify-content: center;  /* horizontal center */
+}
+
+.grid-item .image-container img {
+    width: auto;             /* keep original width proportionally */
+    height: 100%;            /* fill container height */
+    object-fit: cover;       /* keep aspect ratio, crop if needed */
+    object-position: center; /* center the image */
+    display: block;          /* remove inline spacing issues */
+}
+
+.grid-item .info-container {
+    flex: 3; /* 30% of the height */
+    padding: 2px;
+    box-sizing: border-box;
+    margin-top: 10px;
+}
+
 
 /* Add to Cart button */
 .add-to-cart {

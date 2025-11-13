@@ -263,12 +263,23 @@ $categories = $categoryobj->getCategories();
                     </div>
                     <div class="info-container">
                         <h3><?php echo htmlspecialchars($product['product_name']); ?></h3>
+
                         <p style="color:red; font-size: 24px; position: relative; left: 10px;">
-                            Rs <?php echo number_format($product['product_amount']); ?>
+                            Rs
+                            <?php
+                            $price = $product['product_amount'];
+                            $discount = $product['discount_percent'];
+                            $discounted_price = $price - ($price * $discount / 100);
+                            echo htmlspecialchars(number_format($discounted_price, 2));
+                            ?>
                         </p>
-                        <p style="font-size: 20px; text-decoration: line-through; color: gray;">
-                            Rs <?php echo number_format($product['product_amount']); ?>
-                        </p>
+
+                        <?php if ((float) $discount > 0): ?>
+                            <p style="font-size: 20px; text-decoration: line-through; color: gray;">
+                                Rs <?php echo number_format($price); ?>
+                            </p>
+                        <?php endif; ?>
+
                         <p><strong>Sold: </strong><?php echo (int) $product['sold']; ?></p>
                     </div>
                 </div>

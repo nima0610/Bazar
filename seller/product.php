@@ -12,32 +12,28 @@ class Product
         }
     }
 
+
+    public function getSellerDetails($product_id)
+    {
+        $sql = "SELECT * FROM seller WHERE user_id = ?";
+        $stmt = $this->db->query($sql, [$product_id]); // ✅ execute with params here
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     // Save product with image uploads
-    public function addProduct($sellerId, $categoryId, $productName, $amount, $quantity, $description, $images)
+    public function addProduct($sellerId, $categoryId, $productName, $amount, $quantity, $description, $imagesCommaSeparated)
     {
         $results = [];
 
-        if (!$images || !isset($images['tmp_name'])) {
-            throw new Exception("No images uploaded.");
-        }
+        // Insert a single row with all images
+        $this->db->query(
+            "INSERT INTO product (seller_id, category_id, product_name, product_amount, product_stock, description, product_image) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [$sellerId, $categoryId, $productName, $amount, $quantity, $description, $imagesCommaSeparated]
+        );
 
-        foreach ($images['tmp_name'] as $index => $tmpName) {
-            $originalName = basename($images['name'][$index]);
-            $newFileName = time() . '_' . $originalName;
-            $targetFilePath = $this->uploadDir . $newFileName;
-
-            if (move_uploaded_file($tmpName, $targetFilePath)) {
-                $this->db->query(
-                    "INSERT INTO product (seller_id, category_id, product_name, product_amount, product_stock, description, product_image) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    [$sellerId, $categoryId, $productName, $amount, $quantity, $description, $targetFilePath]
-                );
-
-                // $results[] = "Uploaded and saved: " . htmlspecialchars($newFileName);
-            } else {
-                $results[] = "Failed to upload: " . htmlspecialchars($originalName);
-            }
-        }
+        $results[] = "Product added successfully with images.";
 
         return $results;
     }
+
 }

@@ -3,6 +3,7 @@ session_start();
 $isLoggedIn = isset($_SESSION['user_id']);
 require_once 'database.php';
 require_once 'details_product.php';
+require_once 'product.php';
 
 $host = "localhost";
 $dbname = "bazar";
@@ -12,20 +13,47 @@ $pass = "";
 $db = new Database($host, $dbname, $user, $pass);
 
 $details = new Details($db);
-
+$productnikal = new Product($db);
 
 
 
 if (isset($_GET['id'])) {
     $product_id = $_GET['id'];
+    echo "<script>
+ 
+      console.log('Product ID :', " . json_encode($product_id) . ");
+ </script>";
 
     // Example: show the product ID
+    $product_info = $details->getProductDetails($product_id);
+    $product_seller = $product_info['seller_id'];
+    $category_id = $product_info['category_id'];
+
 
     $productdetail = $details->getProductDetails($product_id);
+    $seller_info = $details->getSellerName($product_seller);
+
+    $seller_name = $seller_info['shop_name'];
+    $seller_naam = $seller_info['shop_location'];
+    $seller_phone = $seller_info['phone_number'];
+    echo "<script>
+ 
+      console.log('Category ID :', " . json_encode($category_id) . ");
+ </script>";
+    $products = $productnikal->getProductByCategory($category_id);
+    $product_sale = $productnikal->getTopProductsBySold();
+
+    echo "<script>
+ 
+      console.log('seller name is :', " . json_encode($seller_name) . ");
+ </script>";
+
+
 } else {
     echo "No product selected.";
     exit;
 }
+
 ?>
 
 
@@ -39,6 +67,8 @@ if (isset($_GET['id'])) {
     <!-- Add Font Awesome for icon -->
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+    <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
     <!-- Swiper JS -->
@@ -79,46 +109,89 @@ if (isset($_GET['id'])) {
 
     <div class="product_storage">
         <div class="product_image">
-            <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>" alt="Product Image">
-            <div class="swipeitpart">
-                <div class="firstimg">
-                    <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>"
-                        alt="Product Image">
-                </div>
-                <div class="secondimg">
-                    <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>"
-                        alt="Product Image">
-                </div>
-                <div class="thirdimg">
-                    <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>"
-                        alt="Product Image">
+
+            <!-- Swiper -->
+
+            <div class="swiper mySwiper">
+                <div class="swiper-wrapper">
+                    <?php
+                    // Example: get all product images from database as an array
+                    // Suppose your database has images stored in a comma-separated string
+                    $images = explode(',', $productdetail['product_image']); // product_images: "img1.jpg,img2.jpg,img3.jpg"
+                    
+                    foreach ($images as $image) {
+                        $image = trim($image); // remove whitespace
+                        if (!empty($image)) {
+                            echo '<div class="swiper-slide">';
+                            echo '<img src="seller/' . htmlspecialchars($image) . '" alt="Product Image">';
+                            echo '</div>';
+                        }
+                    }
+                    ?>
                 </div>
 
+                <!-- Optional navigation buttons -->
+                <div class="swiper-button-next"><i class="fas fa-chevron-right"></i></div>
+                <div class="swiper-button-prev"><i class="fas fa-chevron-left"></i></div>
+
+                <!-- Optional pagination -->
+                <div class="swiper-pagination"></div>
             </div>
+
+
         </div>
+
         <div class="product_descript">
             <h1>
                 <h1><?php echo htmlspecialchars($productdetail['product_name']); ?></h1>
-                <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
-                    <?php echo htmlspecialchars($productdetail['sold']); ?> sold
-                </p>
+                <div class="sold_left">
+                    <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
+                        <?php echo htmlspecialchars($productdetail['sold']); ?> sold
+                    </p>
+                    <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
+                        Remaining : <?php echo htmlspecialchars($productdetail['product_stock']); ?>
+                    </p>
+                </div>
                 <hr style="border: 1px solid #000; width: 100%; text-align: center;">
-                <p style="color:red; font-size: 24px; position: relative; left: 10px;">Price: Rs
-                    <?php echo htmlspecialchars($productdetail['product_amount']); ?>
+                <p style="color:red; font-size: 24px; position: relative; left: 10px;">
+                    Price: Rs
+                    <?php
+                    $price = $productdetail['product_amount'];
+                    $discount = $productdetail['discount_percent'];
+                    $discounted_price = $price - ($price * $discount / 100);
+                    echo htmlspecialchars(number_format($discounted_price, 2));
+                    ?>
                 </p>
-                <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;"> Rs <?php echo htmlspecialchars($productdetail['product_amount']); ?></p>
+                <div class="discount">
+
+                    <?php if ((float) $discount > 0): ?>
+                        <p style="color:red; font-size: 20px; text-decoration: line-through; color: gray;">
+                            Rs <?php echo htmlspecialchars($productdetail['product_amount']); ?>
+                        </p>
+                        <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
+                            (<?php echo htmlspecialchars($productdetail['discount_percent']); ?>% discount)
+                        </p>
+                    <?php else: ?>
+                        <p style="color:gray; position: relative; left:15px; font-size: 16px; font-style: italic;">
+                            No discount available for this product.
+                        </p>
+                    <?php endif; ?>
+
+                </div>
             </h1>
 
             <form id="product-form" method="GET" action="purchase.php">
                 <div class="quantity-wrapper">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($product_id); ?>">
+                    <!--
                     <label>Quantity :</label>
                     <div class="quantity">
                         <button type="button" class="decrease">-</button>
                         <input type="text" name="quantity" value="1">
                         <button type="button" class="increase">+</button>
                     </div>
+                    !-->
+
                 </div>
                 <div class="action-buttons">
                     <button class="buy-now">Buy Product</button>
@@ -128,7 +201,130 @@ if (isset($_GET['id'])) {
 
         </div>
         <div class="product_second_descript">
-            <h1>WAITING FOR PROGRESS</h1>
+            <div class="for_gap">
+                <h1>Description</h1>
+                <p>
+                    <?php echo htmlspecialchars(ucfirst($productdetail['description'])); ?>
+                </p>
+
+                <div class="seller_home">
+
+                    <h1>Seller :</h1>
+                    <h2> <img src="img/shopp.png" alt="Shop Logo">
+                        <?php
+                        echo ucwords($seller_name);
+                        ?>
+                    </h2>
+                    <h2> <img src="img/mapp.png" alt="Shop Logo">
+                        <?php
+                        echo ucwords($seller_naam);
+                        ?>
+                    </h2>
+                    <h2> <img src="img/phone.jpeg" alt="Shop Logo">
+                        <?php
+                        echo ucwords($seller_phone);
+                        ?>
+                    </h2>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="flash">
+        <h1>Similar Products</h1>
+    </div>
+
+    <div class="advertisement">
+        <div class="grid-container dashboard-grid">
+            <?php foreach ($products as $product): ?>
+
+                <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+
+                    <div class="image-container">
+                        <?php
+                        // Separate folder and filename
+                        $folder = 'seller/uploads/products/';
+                        $filename = basename($product['product_image']); // 1754894290_Screenshot (3).png
+                        ?>
+                        <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                            alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                    </div>
+                    <div class="info-container">
+                        <h3><?php echo htmlspecialchars($product['product_name']); ?></h3>
+
+
+
+                        <p style="color:red; font-size: 24px; position: relative; left: 10px;">
+                            Rs
+                            <?php
+                            $price = $product['product_amount'];
+                            $discount = $product['discount_percent'];
+                            $discounted_price = $price - ($price * $discount / 100);
+                            echo htmlspecialchars(number_format($discounted_price, 2));
+                            ?>
+                        </p>
+
+                        <?php if ((float) $discount > 0): ?>
+                            <p style="font-size: 20px; text-decoration: line-through; color: gray;">
+                                Rs <?php echo number_format($price); ?>
+                            </p>
+                        <?php endif; ?>
+                        <p><strong>Sold: </strong><?php echo (int) $product['sold']; ?></p>
+                    </div>
+                </div>
+
+            <?php endforeach; ?>
+
+        </div>
+    </div>
+
+    <div class="flash">
+        <h1>Most Sold Items</h1>
+    </div>
+
+    <div class="advertisement">
+        <div class="grid-container dashboard-grid">
+            <?php foreach ($product_sale as $product): ?>
+
+                <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+
+                    <div class="image-container">
+                        <?php
+                        // Separate folder and filename
+                        $folder = 'seller/uploads/products/';
+                        $filename = basename($product['product_image']); // 1754894290_Screenshot (3).png
+                        ?>
+                        <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                            alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                    </div>
+                    <div class="info-container">
+                        <h3><?php echo htmlspecialchars($product['product_name']); ?></h3>
+
+
+
+                        <p style="color:red; font-size: 24px; position: relative; left: 10px;">
+                            Rs
+                            <?php
+                            $price = $product['product_amount'];
+                            $discount = $product['discount_percent'];
+                            $discounted_price = $price - ($price * $discount / 100);
+                            echo htmlspecialchars(number_format($discounted_price, 2));
+                            ?>
+                        </p>
+
+                        <?php if ((float) $discount > 0): ?>
+                            <p style="font-size: 20px; text-decoration: line-through; color: gray;">
+                                Rs <?php echo number_format($price); ?>
+                            </p>
+                        <?php endif; ?>
+                        <p><strong>Sold: </strong><?php echo (int) $product['sold']; ?></p>
+                    </div>
+                </div>
+
+            <?php endforeach; ?>
+
         </div>
     </div>
 
@@ -136,15 +332,30 @@ if (isset($_GET['id'])) {
 
 
 
-
-
-
     <script>
+
+
+        var swiper = new Swiper(".mySwiper", {
+            loop: true,              // infinite loop
+            navigation: {            // arrows
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+            pagination: {            // pagination dots
+                el: ".swiper-pagination",
+                clickable: true,
+            },
+            slidesPerView: 1,        // one image at a time
+            spaceBetween: 10,        // space between slides
+        });
+
+
+
         const productImage = "<?php echo htmlspecialchars($productdetail['product_image']); ?>";
         console.log("Product Image URL:", 'seller/' + productImage);
 
 
-
+        /*
         document.querySelector(".increase").addEventListener("click", function () {
             let input = document.querySelector(".quantity input");
             input.value = parseInt(input.value) + 1;
@@ -157,7 +368,7 @@ if (isset($_GET['id'])) {
                 input.value = value - 1;
             }
         });
-
+        */
 
         document.querySelector('.buy-now').addEventListener('click', (e) => {
             e.preventDefault(); // ✅ stop the form from submitting immediately
@@ -188,7 +399,7 @@ if (isset($_GET['id'])) {
         }, 2000);
 
     </script>
-
+    <script src="app.js"></script>
 </body>
 
 </html>

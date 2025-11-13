@@ -305,15 +305,42 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             const sellerFields = document.getElementById("seller-fields");
             const customerFields = document.getElementById("customer-fields");
 
+            // Hide all sections
             adminFields.style.display = "none";
             sellerFields.style.display = "none";
             customerFields.style.display = "none";
 
-            if (role === "Admin") adminFields.style.display = "block";
-            if (role === "Seller") sellerFields.style.display = "block";
-            if (role === "Customer") customerFields.style.display = "block";
-        }
+            // Disable all inputs first
+            document.querySelectorAll('.role-field input, .role-field select').forEach(el => {
+                el.disabled = true;
+                el.removeAttribute('required');
+            });
 
+            // Enable inputs only for the active role
+            if (role === "Admin") {
+                adminFields.style.display = "block";
+                adminFields.querySelectorAll('input').forEach(el => {
+                    el.disabled = false;
+                    el.setAttribute('required', true);
+                });
+            }
+
+            if (role === "Seller") {
+                sellerFields.style.display = "block";
+                sellerFields.querySelectorAll('input').forEach(el => {
+                    el.disabled = false;
+                    el.setAttribute('required', true);
+                });
+            }
+
+            if (role === "Customer") {
+                customerFields.style.display = "block";
+                customerFields.querySelectorAll('input, select').forEach(el => {
+                    el.disabled = false;
+                    el.setAttribute('required', true);
+                });
+            }
+        }
         window.onload = toggleRoleFields;
 
         // Initialize Select2 for Location

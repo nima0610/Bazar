@@ -19,5 +19,9 @@ class Database
         $stmt->execute($params);
         return $stmt;
     }
+    public function prepare($sql)
+    {
+        return $this->pdo->prepare($sql);
+    }
 }
 ?>

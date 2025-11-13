@@ -5,18 +5,17 @@ require_once 'database.php';
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $product_id = $_GET['product_id'] ?? null;
     $quantity = (int) ($_GET['quantity'] ?? 0);
+}
 
 
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $product_id = $_POST['product_id'] ?? null; //?? null =>exists and is not null, use its value; otherwise, use null
+    $quantity = (int) ($_POST['quantity'] ?? 0);
     echo "<script>
         console.log('Product ID:', " . json_encode($product_id) . ");
         console.log('Quantity:', " . json_encode($quantity) . ");
     </script>";
-}
-
-/*if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $product_id = $_POST['product_id'] ?? null; //?? null =>exists and is not null, use its value; otherwise, use null
-    $quantity = (int) ($_POST['quantity'] ?? 0);
-
     if ($product_id && $quantity > 0) {
         $db = new Database('localhost', 'bazar', 'root', '');
 
@@ -32,24 +31,28 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
             if ($current_stock >= $quantity) {
                 // 2️⃣ Enough stock → update
-                $updateSql = "UPDATE product SET product_stock = product_stock - ? WHERE product_id = ?";
-                $db->query($updateSql, [$quantity, $product_id]);
-
+                $updateSql = "
+    UPDATE product 
+    SET 
+        product_stock = product_stock - ?, 
+        sold = sold + ? 
+    WHERE product_id = ?
+";
+                $db->query($updateSql, [$quantity, $quantity, $product_id]);
                 // ✅ Success message
-                echo "<div style='background:#d4edda;color:#155724;padding:10px;margin:10px 0;border-radius:5px;'>
-                ✅ Successfully purchased product!
-              </div>";
+                header("Location: purchase.php?product_id=$product_id&success=1");
+                exit;
             } else {
                 // ❌ Not enough stock
-                echo "<div style='background:#f8d7da;color:#721c24;padding:10px;margin:10px 0;border-radius:5px;'>
-                ❌ Not enough stock available!
-              </div>";
+                header("Location: purchase.php?product_id=$product_id&error=1");
+                exit;
             }
+
 
         }
     }
 }
-    */
+
 ?>
 
 
@@ -78,6 +81,7 @@ if (isset($_SESSION['user_id'])) {
 
     // Fetch district_id and location_id into separate variables
     $seller_name = $seller_info['shop_name'];
+    $seller_location = $seller_info['shop_location'];
     $district_id = $customer_info['district_id'];
     $location_id = $customer_info['location_id'];
     $customer_name = $customer_info['full_name'];
@@ -125,6 +129,7 @@ if (isset($product_id)) {
     <link rel="stylesheet" href="purchasestyle.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
     <!-- Add Font Awesome for icon -->
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
@@ -146,7 +151,7 @@ if (isset($product_id)) {
             <div class="first_line">
                 <h2>
                     <?php
-                    echo $customer_name;
+                    echo ucwords($customer_name);
                     ?>
                 </h2>
 
@@ -179,39 +184,90 @@ if (isset($product_id)) {
         console.log("the user id is ", <?php echo $_SESSION['user_id']; ?>)
         console.log("the user name is", <?php echo json_encode($_SESSION['username']); ?>);
     </script>
-    <?php if (isset($_GET['success'])): ?>
-        <div id="success-message" style="background:#d4edda;color:#155724;padding:10px;margin:10px 0;border-radius:5px;">
-            ✅ Successfully purchased product!
-        </div>
-    <?php elseif (isset($_GET['error']) && $_GET['error'] == 1): ?>
-        <div id="success-message" style="background:#f8d7da;color:#721c24;padding:10px;margin:10px 0;border-radius:5px;">
-            ❌ Not enough stock available!
-        </div>
-    <?php elseif (isset($_GET['error']) && $_GET['error'] == 2): ?>
-        <div id="success-message" style="background:#f8d7da;color:#721c24;padding:10px;margin:10px 0;border-radius:5px;">
-            ❌ Product not found.
-        </div>
+
+    <?php if (isset($_GET['error']) && $_GET['error'] == 1): ?>
+        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Purchase Failed!',
+                text: '❌ Not enough stock available!',
+                confirmButtonText: 'OK'
+            });
+        </script>
     <?php endif; ?>
 
+
+
     <div class="product_storage">
+
+        <div class="seller_home">
+            <h2> <img src="img/shopp.png" alt="Shop Logo">
+                <?php
+                echo ucwords($seller_name) . "        - " . ucwords($seller_location);
+                ?>
+            </h2>
+        </div>
+
         <div class="product_image">
-            <img src="<?php echo htmlspecialchars('seller/' . $productdetail['product_image']); ?>" alt="Product Image">
-            <div class="swipeitpart">
-                <h2>This part is for swiper to show alternatives</h2>
+
+            <!-- Swiper -->
+
+            <div class="swiper mySwiper">
+                <div class="swiper-wrapper">
+                    <?php
+                    // Example: get all product images from database as an array
+                    // Suppose your database has images stored in a comma-separated string
+                    $images = explode(',', $productdetail['product_image']); // product_images: "img1.jpg,img2.jpg,img3.jpg"
+                    
+                    foreach ($images as $image) {
+                        $image = trim($image); // remove whitespace
+                        if (!empty($image)) {
+                            echo '<div class="swiper-slide">';
+                            echo '<img src="seller/' . htmlspecialchars($image) . '" alt="Product Image">';
+                            echo '</div>';
+                        }
+                    }
+                    ?>
+                </div>
+
+                <!-- Optional navigation buttons -->
+                <div class="swiper-button-next"><i class="fas fa-chevron-right"></i></div>
+                <div class="swiper-button-prev"><i class="fas fa-chevron-left"></i></div>
+
+                <!-- Optional pagination -->
+                <div class="swiper-pagination"></div>
             </div>
+
         </div>
         <div class="product_descript">
-            <h1>
-                <h1><?php echo htmlspecialchars($productdetail['product_name']); ?></h1>
+            <h1><?php echo htmlspecialchars($productdetail['product_name']); ?></h1>
+            <div class="sold_left">
                 <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
                     <?php echo htmlspecialchars($productdetail['sold']); ?> sold
                 </p>
-                <hr style="border: 1px solid #000; width: 100%; text-align: center;">
-                <p style="color:red; font-size: 24px; position: relative; left: 10px;">Price: Rs
-                    <?php echo htmlspecialchars($productdetail['product_amount']); ?>
+                <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
+                    Remaining : <?php echo htmlspecialchars($productdetail['product_stock']); ?>
                 </p>
+            </div>
+
+            <hr style="border: 1px solid #000; width: 100%; text-align: center;">
+            <p style="color:red; font-size: 24px; position: relative; left: 10px;">
+                Price: Rs
+                <?php
+                $price = $productdetail['product_amount'];
+                $discount = $productdetail['discount_percent'];
+                $discounted_price = $price - ($price * $discount / 100);
+                echo htmlspecialchars(number_format($discounted_price, 2));
+                ?>
+            </p>
+            <div class="discount">
                 <p style="color:red; font-size: 20px;text-decoration: line-through;
     color: gray;"> Rs <?php echo htmlspecialchars($productdetail['product_amount']); ?></p>
+                <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
+                    (<?php echo htmlspecialchars($productdetail['discount_percent']); ?>% discount)
+                </p>
+            </div>
             </h1>
 
             <form id="product-form" method="POST" action="purchase.php">
@@ -225,15 +281,27 @@ if (isset($product_id)) {
                     </div>
                 </div>
                 <div class="action-buttons">
-                    <button class="buy-now">Buy Product</button>
-                    <button class="add-to-cart">Add to Cart</button>
+                    <button type="button" class="buy-now">Buy Product</button>
+                    <button type="button" class="add-to-cart">Add to Cart</button>
                 </div>
             </form>
+            <?php if (isset($_GET['success'])): ?>
+                <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+                <script>
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Purchase Successful!',
+                        // text: '✅ Successfully purchased product!',
+                        html: '✅ Successfully purchased product.<br>🛒 Check your list items!',
+                        showConfirmButton: false,
+                        timer: 4000
+                    }).then(() => {
+                        window.location.href = 'index.php';
+                    });
+                </script>
+            <?php endif; ?>
+        </div>
 
-        </div>
-        <div class="product_second_descript">
-            <h1>WAITING FOR PROGRESS</h1>
-        </div>
     </div>
 
 
@@ -244,6 +312,21 @@ if (isset($product_id)) {
 
 
     <script>
+
+        var swiper = new Swiper(".mySwiper", {
+            loop: true,              // infinite loop
+            navigation: {            // arrows
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+            pagination: {            // pagination dots
+                el: ".swiper-pagination",
+                clickable: true,
+            },
+            slidesPerView: 1,        // one image at a time
+            spaceBetween: 10,        // space between slides
+        });
+
         const productImage = "<?php echo htmlspecialchars($productdetail['product_image']); ?>";
         console.log("Product Image URL:", 'seller/' + productImage);
 
