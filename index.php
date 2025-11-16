@@ -51,7 +51,7 @@ $categories = $categoryobj->getCategories();
         console.log("the user name is", <?php echo json_encode($_SESSION['username']); ?>);    </script>
     <div class="main">
         <div class="side_options">
-            <a href="#">Become a Seller</a>
+            <a href="activity.php">My Activity</a>
             <a href="login.php">Login</a>
             <a href="registration.php">Signup</a>
             <a href="#">Help and Support</a>
