@@ -1,5 +1,6 @@
 <?php
 session_start();
+$isLoggedIn = isset($_SESSION['user_id']);
 require_once "database.php";
 require_once "product.php";
 require_once "categories.php";
@@ -51,8 +52,7 @@ $categories = $categoryobj->getCategories();
         console.log("the user name is", <?php echo json_encode($_SESSION['username']); ?>);    </script>
     <div class="main">
         <div class="side_options">
-            <a href="activity.php">My Activity</a>
-            <a href="login.php">Login</a>
+            <a href="activity.php" class="activity-link">My Activity</a> <a href="login.php">Login</a>
             <a href="registration.php">Signup</a>
             <a href="#">Help and Support</a>
         </div>
@@ -315,7 +315,17 @@ $categories = $categoryobj->getCategories();
         </div>
     </div>
 
+    <script>
+        document.querySelector('.activity-link').addEventListener('click', function (e) {
+            const isLoggedIn = <?php echo json_encode($isLoggedIn); ?>;
 
+            if (!isLoggedIn) {
+                e.preventDefault(); // stop navigating
+                alert("You have to login first.");
+                window.location.href = "login.php";
+            }
+        });
+    </script>
     <script src="app.js"></script>
 
 

@@ -12,9 +12,13 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $product_id = $_POST['product_id'] ?? null; //?? null =>exists and is not null, use its value; otherwise, use null
     $quantity = (int) ($_POST['quantity'] ?? 0);
+    $d_price = (int) ($_POST['discounted_price'] ?? 0);
+    $d_percent = (int) ($_POST['discount_percent'] ?? 0);
+    $userID = $_SESSION['user_id'];
     echo "<script>
         console.log('Product ID:', " . json_encode($product_id) . ");
         console.log('Quantity:', " . json_encode($quantity) . ");
+        console.log('D_price:', " . json_encode($d_price) . ");
     </script>";
     if ($product_id && $quantity > 0) {
         $db = new Database('localhost', 'bazar', 'root', '');
@@ -38,6 +42,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         sold = sold + ? 
     WHERE product_id = ?
 ";
+
+                $insertSql = "
+    INSERT INTO purchase_history (
+        user_id,
+        product_id,
+        cost,
+        sold,
+        discount
+    ) VALUES (?, ?, ?, ?, ?)
+";
+                $db->query($insertSql, [$userID, $product_id, $d_price, $quantity, $d_percent]);
                 $db->query($updateSql, [$quantity, $quantity, $product_id]);
                 // ✅ Success message
                 header("Location: purchase.php?product_id=$product_id&success=1");
@@ -271,6 +286,18 @@ if (isset($product_id)) {
             </h1>
 
             <form id="product-form" method="POST" action="purchase.php">
+
+                <!-- Discounted price inside form -->
+                <?php
+                $price = $productdetail['product_amount'];
+                $discount = $productdetail['discount_percent'];
+                $discounted_price = $price - ($price * $discount / 100);
+                ?>
+
+                <!-- Hidden input to POST discounted price -->
+                <input type="hidden" name="discounted_price" value="<?php echo $discounted_price; ?>">
+                <input type="hidden" name="discount_percent" value="<?php echo $discount; ?>">
+
                 <div class="quantity-wrapper">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($product_id); ?>">
                     <label>Quantity :</label>
