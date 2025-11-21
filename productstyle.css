@@ -322,6 +322,22 @@ body{
   margin-top: 20px;
 }
 
+
+.flash{
+  padding: 10px;
+  display: block;
+  margin-left: 20px;
+ /* margin-top: 10px; */
+}
+
+.flash h1{
+  align-items: center;
+  font-family: sans-serif;
+  font-size: 32px;
+  color: rgb(0, 0, 0);
+  text-align: center;
+}
+
 .action-buttons button {
   padding: 12px 24px;
   font-size: 16px;

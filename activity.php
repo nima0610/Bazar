@@ -117,7 +117,10 @@ if (isset($_SESSION['user_id'])) {
 
                     <!-- Edit / Cancel buttons -->
                     <div class="action-buttons">
-                        <a href="edit.php?id=<?php echo $productId; ?>" class="edit-btn">Edit Order</a>
+                        <button class="edit-btn" data-purchase-id="<?php echo $purchaseId; ?>"
+                            data-quantity="<?php echo $purchase['sold']; ?>">
+                            Edit Order
+                        </button>
                         <button class="cancel-btn" data-purchase-id="<?php echo $purchaseId; ?>">Cancel Order</button>
                     </div>
 
@@ -214,11 +217,88 @@ if (isset($_SESSION['user_id'])) {
                     });
             });
         });
+
+
     </script>
 
+    <!-- Edit Popup Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2>Edit Order</h2>
 
+            <label>New Quantity:</label>
+            <input type="number" id="editQty" min="1">
 
+            <button id="saveEdit">Save</button>
+            <button id="closeEdit">Cancel</button>
+        </div>
+    </div>
 
+    <style>
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+    </style>
+
+    <script>
+
+        let currentPurchaseId = null;
+
+        // OPEN POPUP
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                currentPurchaseId = this.dataset.purchaseId;
+                const qty = this.dataset.quantity;
+
+                document.getElementById('editQty').value = qty;
+                document.getElementById('editModal').style.display = "flex";
+            });
+        });
+
+        // CLOSE POPUP
+        document.getElementById('closeEdit').addEventListener('click', function () {
+            document.getElementById('editModal').style.display = "none";
+        });
+
+        // SAVE EDIT
+        document.getElementById('saveEdit').addEventListener('click', function () {
+            const newQty = document.getElementById('editQty').value;
+
+            fetch('update_purchase_ajax.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    purchase_id: currentPurchaseId,
+                    new_qty: newQty
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Order updated!");
+
+                        location.reload(); // reload page to update quantity
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                });
+        });
+    </script>
 </body>
 
 </html>

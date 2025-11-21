@@ -21,6 +21,15 @@ $categoryobj = new Categories($db);
 
 // Fetch products ordered by sold quantity descending
 $products = $productObj->getTopProductsBySold();
+$product_category = $productObj->getTopProductByDiscount();
+$home_essential = $productObj->getTopHomeDecor();
+$beauty_products = $productObj->getTopBeauty();
+$home_decorations = $productObj->getTopHome();
+$utensils = $productObj->getTopUtensils();
+$nb_set = $productObj->getTopBeautyNB();
+$watch = $productObj->getTopWatch();
+$electronics = $productObj->getTopElectronics();
+$toys = $productObj->getTopToys();
 $categories = $categoryobj->getCategories();
 ?>
 
@@ -34,6 +43,8 @@ $categories = $categoryobj->getCategories();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop From Home</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" rel="stylesheet" />
     </style>
     <!-- Add Font Awesome for icon -->
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
@@ -60,7 +71,7 @@ $categories = $categoryobj->getCategories();
             <img src="assets/bazari.png">
         </div>
         <div class="search_bar">
-            <form method="POST">
+            <form method="GET" action="search.php">
                 <input type="text" name="searcher" placeholder="Search Products in Bazar">
                 <button class="search-button">🔍</button>
             </form>
@@ -87,160 +98,273 @@ $categories = $categoryobj->getCategories();
         </div> <!-- end swiper -->
     </section>
 
+    <div class="categorize">
+        <div class="box1">
+            <h2>Shop for Beauty Products</h2>
+
+            <div class="show_productbox">
+                <?php
+                // Loop through products dynamically
+                foreach ($beauty_products as $product):
+                    $folder = 'seller/uploads/products/';
+                    $filename = basename($product['product_image']);
+                    $price = $product['product_amount'];
+                    $discount = $product['discount_percent'];
+                    $discounted_price = $price - ($price * $discount / 100);
+                    ?>
+                    <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+                        <div class="image-container">
+                            <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                                alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                        </div>
+                        <div class="info-container">
+                            <h3 style="text-align: center;"><?php echo htmlspecialchars($product['product_name']); ?></h3>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+        </div>
+
+        <div class="box2">
+            <h2>Shop for Cars</h2>
+
+            <div class="show_productbox">
+                <?php
+                // Loop through products dynamically
+                foreach ($home_essential as $product):
+                    $folder = 'seller/uploads/products/';
+                    $filename = basename($product['product_image']);
+                    $price = $product['product_amount'];
+                    $discount = $product['discount_percent'];
+                    $discounted_price = $price - ($price * $discount / 100);
+                    ?>
+                    <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+                        <div class="image-container">
+                            <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                                alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                        </div>
+                        <div class="info-container">
+                            <h3 style="text-align: center;"><?php echo htmlspecialchars($product['product_name']); ?></h3>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+
+        </div>
+        <div class="box3">
+            <h2>Shop Home Decorations</h2>
+
+            <div class="show_productbox">
+                <?php
+                // Loop through products dynamically
+                foreach ($home_decorations as $product):
+                    $folder = 'seller/uploads/products/';
+                    $filename = basename($product['product_image']);
+                    $price = $product['product_amount'];
+                    $discount = $product['discount_percent'];
+                    $discounted_price = $price - ($price * $discount / 100);
+                    ?>
+                    <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+                        <div class="image-container">
+                            <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                                alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                        </div>
+                        <div class="info-container">
+                            <h3 style="text-align: center;"><?php echo htmlspecialchars($product['product_name']); ?></h3>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+        </div>
+
+        <div class="box4">
+            <h2>Shop for Utensils</h2>
+            <div class="show_productbox">
+                <?php
+                // Loop through products dynamically
+                foreach ($utensils as $product):
+                    $folder = 'seller/uploads/products/';
+                    $filename = basename($product['product_image']);
+                    $price = $product['product_amount'];
+                    $discount = $product['discount_percent'];
+                    $discounted_price = $price - ($price * $discount / 100);
+                    ?>
+                    <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+                        <div class="image-container">
+                            <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                                alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                        </div>
+                        <div class="info-container">
+                            <h3 style="text-align: center;"><?php echo htmlspecialchars($product['product_name']); ?></h3>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="categorize2">
+        <div class="box1">
+            <h2>Shop for NB Sets</h2>
+
+            <div class="show_productbox">
+                <?php
+                // Loop through products dynamically
+                foreach ($nb_set as $product):
+                    $folder = 'seller/uploads/products/';
+                    $filename = basename($product['product_image']);
+                    $price = $product['product_amount'];
+                    $discount = $product['discount_percent'];
+                    $discounted_price = $price - ($price * $discount / 100);
+                    ?>
+                    <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+                        <div class="image-container">
+                            <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                                alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                        </div>
+                        <div class="info-container">
+                            <h3 style="text-align: center;"><?php echo htmlspecialchars($product['product_name']); ?></h3>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+        </div>
+
+        <div class="box2">
+            <h2>Shop Watches</h2>
+
+            <div class="show_productbox">
+                <?php
+                // Loop through products dynamically
+                foreach ($watch as $product):
+                    $folder = 'seller/uploads/products/';
+                    $filename = basename($product['product_image']);
+                    $price = $product['product_amount'];
+                    $discount = $product['discount_percent'];
+                    $discounted_price = $price - ($price * $discount / 100);
+                    ?>
+                    <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+                        <div class="image-container">
+                            <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                                alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                        </div>
+                        <div class="info-container">
+                            <h3 style="text-align: center;"><?php echo htmlspecialchars($product['product_name']); ?></h3>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+
+        </div>
+        <div class="box3">
+            <h2>Shop for Electronics</h2>
+
+            <div class="show_productbox">
+                <?php
+                // Loop through products dynamically
+                foreach ($electronics as $product):
+                    $folder = 'seller/uploads/products/';
+                    $filename = basename($product['product_image']);
+                    $price = $product['product_amount'];
+                    $discount = $product['discount_percent'];
+                    $discounted_price = $price - ($price * $discount / 100);
+                    ?>
+                    <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+                        <div class="image-container">
+                            <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                                alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                        </div>
+                        <div class="info-container">
+                            <h3 style="text-align: center;"><?php echo htmlspecialchars($product['product_name']); ?></h3>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+        </div>
+
+        <div class="box4">
+            <h2>Shop for Toys</h2>
+            <div class="show_productbox">
+                <?php
+                // Loop through products dynamically
+                foreach ($toys as $product):
+                    $folder = 'seller/uploads/products/';
+                    $filename = basename($product['product_image']);
+                    $price = $product['product_amount'];
+                    $discount = $product['discount_percent'];
+                    $discounted_price = $price - ($price * $discount / 100);
+                    ?>
+                    <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+                        <div class="image-container">
+                            <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                                alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                        </div>
+                        <div class="info-container">
+                            <h3 style="text-align: center;"><?php echo htmlspecialchars($product['product_name']); ?></h3>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
     <div class="flash">
         <h1>Flash Sale</h1>
     </div>
 
     <div class="advertisement">
         <div class="grid-container dashboard-grid">
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/shoes.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Summer Shoes</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 2500</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 2750</p>
+            <?php foreach ($product_category as $product): ?>
 
+                <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
+
+                    <div class="image-container">
+                        <?php
+                        // Separate folder and filename
+                        $folder = 'seller/uploads/products/';
+                        $filename = basename($product['product_image']); // 1754894290_Screenshot (3).png
+                        ?>
+                        <img src="<?php echo $folder . rawurlencode($filename); ?>"
+                            alt="<?php echo htmlspecialchars($product['product_name']); ?>" />
+                    </div>
+                    <div class="info-container">
+                        <h3><?php echo htmlspecialchars($product['product_name']); ?></h3>
+
+                        <p style="color:red; font-size: 24px; position: relative; left: 10px;">
+                            Rs
+                            <?php
+                            $price = $product['product_amount'];
+                            $discount = $product['discount_percent'];
+                            $discounted_price = $price - ($price * $discount / 100);
+                            echo htmlspecialchars(number_format($discounted_price, 2));
+                            ?>
+                        </p>
+
+                        <?php if ((float) $discount > 0): ?>
+                            <p style="font-size: 20px; text-decoration: line-through; color: gray;">
+                                Rs <?php echo number_format($price); ?>
+                            </p>
+                        <?php endif; ?>
+
+                        <p><strong>Sold: </strong><?php echo (int) $product['sold']; ?></p>
+                    </div>
                 </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/uno.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Premium UNO cards</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 500</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 750</p>
-                </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/jacket.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Army Jacket</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 5500</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 6750</p>
-                </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/guitar.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Cort Guitar</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 25000</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 27999</p>
-                </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/gloves.avif" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Oven Gloves</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 2449</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 2999</p>
-                </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/cycle.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Kid's Cycle</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 8199</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 9899</p>
-                </div>
-            </div>
+
+            <?php endforeach; ?>
+
         </div>
     </div>
 
     <br>
 
-    <div class="flash">
-        <h1>Flash Sale</h1>
-    </div>
-
-    <div class="advertisement">
-        <div class="grid-container dashboard-grid">
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/shoes.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Summer Shoes</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 2500</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 2750</p>
-                </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/uno.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Premium UNO cards</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 500</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 750</p>
-                </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/jacket.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Army Jacket</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 5500</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 6750</p>
-                </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/guitar.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Cort Guitar</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 25000</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 27999</p>
-                </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/gloves.avif" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Oven Gloves</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 2449</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 2999</p>
-                </div>
-            </div>
-            <div class="grid-item">
-                <div class="image-container">
-                    <img src="img/cycle.jpg" alt="Product Image" />
-                </div>
-                <div class="info-container">
-                    <h3>Kid's Cycle</h3>
-                    <p style="color:red; font-size: 24px; position: relative; left: 10px;">Rs 8199</p>
-                    <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;">Rs 9899</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <br>
 
     <div class="flash">
         <h1>Most Sold Items</h1>
@@ -289,7 +413,7 @@ $categories = $categoryobj->getCategories();
         </div>
     </div>
 
-    <div class="flash">
+    <!--<div class="flash">
         <h1>Categories</h1>
     </div>
 
@@ -315,6 +439,8 @@ $categories = $categoryobj->getCategories();
         </div>
     </div>
 
+    !-->
+
     <script>
         document.querySelector('.activity-link').addEventListener('click', function (e) {
             const isLoggedIn = <?php echo json_encode($isLoggedIn); ?>;
@@ -327,6 +453,89 @@ $categories = $categoryobj->getCategories();
         });
     </script>
     <script src="app.js"></script>
+
+
+    <footer class="footer">
+        <div class="section__container footer__container">
+            <div class="footer__col">
+                <div class="footer__logo">
+                    <a href="#" class="logo">
+                        <img src="assets/bazari.png" alt="logo" />
+
+                    </a>
+                </div>
+                <p>
+                    We're here to provide you with the best vehicles and a seamless
+                    rental experience. Stay connected for updates, special offers, and
+                    more. Drive with confidence!
+                </p>
+                <ul class="footer__socials">
+                    <li>
+                        <a href="#"><i class="ri-facebook-fill"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-twitter-fill"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-linkedin-fill"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-instagram-line"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-youtube-fill"></i></a>
+                    </li>
+                </ul>
+            </div>
+            <div class="footer__col">
+                <h4>Our Services</h4>
+                <ul class="footer__links">
+                    <li>
+                        Online Shopping
+                    </li>
+                    <li>
+                        Fast Delivery
+                    </li>
+                    <li>
+                        Cash on Delivery
+                    </li>
+                    <li>
+                        Flash Sale
+                    </li>
+                    <li>
+                        Testimonials
+                    </li>
+                </ul>
+            </div>
+
+            <div class="footer__col">
+                <h4>Contact</h4>
+                <ul class="footer__links">
+                    <li>
+                        <a href="#">
+                            <span><i class="ri-phone-fill"></i></span> +9825085032
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span><i class="ri-map-pin-fill"></i></span> Putalisadak, Kathmandu
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span><i class="ri-mail-fill"></i></span> nima19bit2021@kcc.edu.np
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer__bar">
+            Copyright ©. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/scrollreveal"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
 
 </body>
