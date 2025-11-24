@@ -484,3 +484,106 @@ body{
     text-align: center;
   }
 }
+
+
+#review-popup {
+    display: none;
+    position: fixed;
+    top: 15%;                     /* Slightly lower */
+    left: 73%;                    /* Moved toward right side */
+    transform: translate(-50%, 0);
+    z-index: 2000;
+}
+
+.popup-content {
+    width: 350px;                 /* Bigger size */
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.25);
+    text-align: center;
+    border: 1px solid #ddd;
+    animation: popupFade 0.25s ease-out;
+}
+
+.popup-content h3 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.popup-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Spacing between buttons */
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+.btn-danger {
+    background-color: #ff4d4d;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+@keyframes popupFade {
+    from { opacity: 0; transform: translate(-50%, -10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+#review-popup h3 {
+    margin-bottom: 5px !important;  /* Reduce gap */
+}
+
+#pending-products {
+    margin-top: 0 !important;
+    padding-top: 0;
+}
+
+#pending-products ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+#pending-products li {
+    margin: 0;
+    padding: 3px 0;
+    font-weight: bold;
+    text-align: center;
+}
+
+#blur-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(6px);     /* BLUR EFFECT */
+    background: rgba(0,0,0,0.3);    /* Slight dark tint */
+    z-index: 900;                   /* Below popup but above site */
+    display: none;                  /* Hidden by default */
+}
+
+#review-popup {
+    z-index: 1000 !important;
+}

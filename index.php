@@ -31,6 +31,33 @@ $watch = $productObj->getTopWatch();
 $electronics = $productObj->getTopElectronics();
 $toys = $productObj->getTopToys();
 $categories = $categoryobj->getCategories();
+
+
+
+//for review part....
+$pendingReview = false;
+
+if ($isLoggedIn) {
+    $userId = $_SESSION['user_id'];
+
+    // Fetch all delivered orders that are pending review
+    $stmt = $db->prepare("
+    SELECT ph.id, p.product_name
+    FROM purchase_history ph
+    JOIN product p ON ph.product_id = p.product_id
+    WHERE ph.user_id = :user_id AND ph.status = 'delivered' AND ph.review_status = 'pending'
+    ORDER BY ph.id ASC
+");
+    $stmt->bindParam(':user_id', $userId);
+    $stmt->execute();
+    $pendingOrders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $pendingReview = count($pendingOrders) > 0;
+}
+
+
+
+
 ?>
 
 
@@ -442,6 +469,24 @@ $categories = $categoryobj->getCategories();
     !-->
 
     <script>
+        const pendingReview = <?php echo json_encode($pendingReview); ?>;
+        const pendingOrders = <?php echo json_encode($pendingOrders ?? []); ?>; // safe fallback for guests
+    </script>
+
+    <div id="blur-overlay"></div>
+    <div id="review-popup">
+        <div class="popup-content">
+            <h3 id="review-title">Would you like to provide feedback for:</h3>
+            <div id="pending-products"></div>
+
+            <div class="popup-buttons">
+                <button id="review-now" class="btn btn-primary">Give Feedback</button>
+                <button id="review-later" class="btn btn-secondary">Later</button>
+                <button id="no_review" class="btn btn-danger">Not Interested</button>
+            </div>
+        </div>
+    </div>
+    <script>
         document.querySelector('.activity-link').addEventListener('click', function (e) {
             const isLoggedIn = <?php echo json_encode($isLoggedIn); ?>;
 
@@ -451,6 +496,69 @@ $categories = $categoryobj->getCategories();
                 window.location.href = "login.php";
             }
         });
+
+
+        //for reviewe .....
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const popup = document.getElementById('review-popup');
+            const blur = document.getElementById('blur-overlay');
+            const listDiv = document.getElementById('pending-products');
+
+            // Only run if there are pending reviews
+            if (pendingReview && pendingOrders.length > 0) {
+
+                // Show popup & blur
+                popup.style.display = 'block';
+                blur.style.display = 'block';
+
+                // Create product list
+                let html = "<ul>";
+                pendingOrders.forEach(order => {
+                    html += `<li>${order.product_name}</li>`;
+                });
+                html += "</ul>";
+                listDiv.innerHTML = html;
+
+                // ========= BUTTON HANDLERS =========
+
+                // 1. WHEN USER WANTS TO GIVE FEEDBACK
+                document.getElementById('review-now').addEventListener('click', function () {
+                    window.location.href = 'feedback.php'; // go to feedback page
+                });
+
+                // 2. WHEN USER WANTS TO REVIEW LATER
+                document.getElementById('review-later').addEventListener('click', function () {
+                    popup.style.display = 'none';
+                    blur.style.display = 'none';
+                });
+
+                // 3. WHEN USER IS NOT INTERESTED (MARK ALL AS SKIPPED)
+                document.getElementById('no_review').addEventListener('click', function () {
+
+                    const orderIds = pendingOrders.map(o => o.id).join(',');
+
+                    fetch('update_review.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'order_ids=' + encodeURIComponent(orderIds)
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                popup.style.display = 'none';
+                                blur.style.display = 'none';
+                                alert('All pending orders have been marked as skipped.');
+                            } else {
+                                alert('Something went wrong while updating.');
+                            }
+                        })
+                        .catch(err => console.error(err));
+                });
+            }
+        });
+
+
     </script>
     <script src="app.js"></script>
 
@@ -465,9 +573,9 @@ $categories = $categoryobj->getCategories();
                     </a>
                 </div>
                 <p>
-                    We're here to provide you with the best vehicles and a seamless
-                    rental experience. Stay connected for updates, special offers, and
-                    more. Drive with confidence!
+                    "We're here to bring you the best online shopping experience with a wide range of products, great
+                    deals, and fast delivery. Stay tuned for updates, exclusive offers, and more. Shop with confidence
+                    on Daraz!"
                 </p>
                 <ul class="footer__socials">
                     <li>
