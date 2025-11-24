@@ -140,6 +140,9 @@ if (isset($product_id)) {
 <html>
 
 <head>
+
+
+
     <title>Product Detail</title>
     <link rel="stylesheet" href="purchasestyle.css">
     <meta charset="UTF-8">
@@ -155,7 +158,23 @@ if (isset($product_id)) {
 </head>
 
 <body>
-
+    <div class="main">
+        <div class="side_options">
+            <a href="activity.php" class="activity-link">My Activity</a>
+            <a href="login.php">Login</a>
+            <a href="registration.php">Signup</a>
+            <a href="index.php">Home</a>
+        </div>
+        <div class="logo_main">
+            <img src="assets/bazari.png">
+        </div>
+        <div class="search_bar">
+            <form method="GET" action="search.php">
+                <input type="text" name="searcher" placeholder="Search Products in Bazar">
+                <button class="search-button">🔍</button>
+            </form>
+        </div>
+    </div>
 
 
     <div class="customer_detail">

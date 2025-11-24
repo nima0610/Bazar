@@ -57,11 +57,11 @@ body{
 
 .side_options {
     position: absolute;
-    top: 5%;
+    top: 35%;
     right: 15px;
     display: flex;
     gap: 15px;
-
+z-index: 1000;
 
 }
 
@@ -79,12 +79,13 @@ body{
 }
 
 .search_bar form {
-  width: 480px;
-  max-width: 480px;
-  height: 30px;
+  width: 580px;
+  max-width: 580px;
+  height: 40px;
   position: absolute;
   display: flex;
-  left: 5%;
+  left: 10%;
+  top: -20%;
   background-color: white;
   
   border: 1px solid black;
@@ -118,8 +119,8 @@ body{
 
 .logo_main{
   position: relative;
-  top: -210%;
-  left: -3%;
+  top: -190%;
+  left: 8%;
   width: 240px;
   max-width: 240px;
   height: 140px;
@@ -166,7 +167,8 @@ body{
   height: fit-content;
   width: 100%;
   background-color: orange;
-  /*padding-left: 13px;*/
+  padding-left: 15px;
+    padding-right: 15px;
   
  /* border: 2px solid orange;
   border-radius: 9px; */
@@ -211,15 +213,16 @@ body{
     box-sizing: border-box;  /* include padding in width */
 }
 
+
 .grid-container {
     display: grid;
     width: 100%;
     padding: 10px;
-    gap: 5px;
+    gap: 25px;
     grid-auto-rows: 300px; /* each row is 300px tall */
 }
 .dashboard-grid {
-    grid-template-columns: repeat(6, 1fr); /* Dashboard: 2 columns */
+    grid-template-columns: repeat(4, 1fr); /* Dashboard: 2 columns */
     
 }
 .grid-item {
@@ -570,6 +573,9 @@ body{
     padding: 3px 0;
     font-weight: bold;
     text-align: center;
+}
+.side_options a:last-child {
+    margin-right: 15px; /* adds 15px gap to the last link */
 }
 
 #blur-overlay {

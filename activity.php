@@ -55,6 +55,23 @@ if (isset($_SESSION['user_id'])) {
 </head>
 
 <body>
+
+    <div class="main">
+        <div class="side_options">
+            <a href="login.php">Login</a>
+            <a href="registration.php">Signup</a>
+            <a href="index.php">Home</a>
+        </div>
+        <div class="logo_main">
+            <img src="assets/bazari.png">
+        </div>
+        <div class="search_bar">
+            <form method="GET" action="search.php">
+                <input type="text" name="searcher" placeholder="Search Products in Bazar">
+                <button class="search-button">🔍</button>
+            </form>
+        </div>
+    </div>
     <div class="customer_detail">
         <div class="map_img">
             <img src="img/mapp.png" alt="Product Image" />

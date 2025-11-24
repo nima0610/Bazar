@@ -9,6 +9,95 @@ body{
     background-color: #ededed;
 }
 
+.main {
+    display: flex;
+    position: relative;
+    font-family: Arial, Helvetica, sans-serif;
+    border: 1px solid rgb(113, 112, 112);
+    background-color: orange;
+    padding: 20px;
+    height: 70px;
+}
+
+.side_options {
+    position: absolute;
+    top: 35%;
+    right: 15px;
+    display: flex;
+    gap: 15px;
+    z-index: 1000;
+
+
+}
+
+.side_options a {
+    color: white;
+    font-size: 15px;
+    text-decoration: none;
+    font-weight: bold;
+}
+.side_options a:last-child {
+    margin-right: 15px; /* adds 15px gap to the last link */
+}
+
+.search_bar {
+  position: relative;
+  width: 100%;
+}
+
+.search_bar form {
+  width: 580px;
+  max-width: 580px;
+  height: 40px;
+  position: absolute;
+  display: flex;
+  left: 10%;
+  top: -20%;
+  background-color: white;
+  
+  border: 1px solid black;
+}
+
+.search_bar input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  width: 100%;
+  border: none;
+  outline: none;
+}
+
+.search-button {
+    background-color: #e0e0e0; /* greyish color */
+    border: none;
+    width: 10px;
+    padding: 0 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    height: 100%;
+}
+
+.search-button:hover {
+    background-color: #d5d5d5;
+}
+
+.logo_main{
+  position: relative;
+  top: -190%;
+  left: 8%;
+  width: 240px;
+  max-width: 240px;
+  height: 140px;
+}
+
+.logo_main img{
+  width: 100%;
+  height: 100%;
+}
+
 @media (min-width: 1025px) {
   .container {
     max-width: 1200px;

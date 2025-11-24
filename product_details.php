@@ -123,7 +123,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
     <?php endif; ?>
     <div class="main">
         <div class="side_options">
-            <a href="#">Become a Seller</a>
+            <a href="activity.php" class="activity-link">My Activity</a>
             <a href="login.php">Login</a>
             <a href="registration.php">Signup</a>
             <a href="index.php">Home</a>
@@ -132,7 +132,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
             <img src="assets/bazari.png">
         </div>
         <div class="search_bar">
-            <form method="POST">
+            <form method="GET" action="search.php">
                 <input type="text" name="searcher" placeholder="Search Products in Bazar">
                 <button class="search-button">🔍</button>
             </form>
@@ -350,7 +350,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
 
 
     <div class="flash">
-        <h1>Similar Products</h1>
+        <h1>You may also like</h1>
     </div>
 
     <div class="advertisement">
