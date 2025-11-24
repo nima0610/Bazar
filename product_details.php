@@ -33,6 +33,8 @@ if (isset($_GET['id'])) {
     $productdetail = $details->getProductDetails($product_id);
     $seller_info = $details->getSellerName($product_seller);
 
+    $product_review = $details->getProductReview($product_id);
+
     $seller_name = $seller_info['shop_name'];
     $seller_naam = $seller_info['shop_location'];
     $seller_phone = $seller_info['phone_number'];
@@ -54,6 +56,36 @@ if (isset($_GET['id'])) {
     exit;
 }
 
+?>
+
+<?php
+// Calculate average rating for this product
+$averageRating = 0;
+if (!empty($product_review)) {
+    $totalRating = 0;
+    $reviewCount = count($product_review);
+    foreach ($product_review as $rev) {
+        $totalRating += (float) $rev['rating'];
+    }
+    $averageRating = $totalRating / $reviewCount;
+}
+$roundedRating = round($averageRating, 1); // round to 1 decimal
+$reviewCount = count($product_review);
+?>
+
+
+<?php
+// ----- PAGINATION LOGIC -----
+$reviewsPerPage = 5; // Number of reviews per page
+$totalReviews = count($product_review); // total reviews for this product
+$totalPages = ceil($totalReviews / $reviewsPerPage);
+
+// Get current page from URL ?page=1, default is 1
+$currentPage = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+$currentPage = max(1, min($currentPage, $totalPages)); // safety check
+
+$startIndex = ($currentPage - 1) * $reviewsPerPage;
+$currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
 ?>
 
 
@@ -144,6 +176,22 @@ if (isset($_GET['id'])) {
         <div class="product_descript">
             <h1>
                 <h1><?php echo htmlspecialchars($productdetail['product_name']); ?></h1>
+                <div class="average-rating" style="display:flex; align-items:center; gap:5px; margin-top:5px;">
+                    <?php
+                    // Display 5 stars
+                    for ($i = 1; $i <= 5; $i++) {
+                        if ($i <= floor($averageRating)) {
+                            echo "<span class='star filled'>★</span>"; // full star
+                        } elseif ($i - $averageRating < 1) {
+                            echo "<span class='star filled' style='clip-path: inset(0 " . (100 - (($averageRating - floor($averageRating)) * 100)) . "% 0 0);'>★</span>"; // partial star
+                        } else {
+                            echo "<span class='star empty'>☆</span>"; // empty star
+                        }
+                    }
+                    ?>
+                    <span style="font-size:16px; color:#555;"><?php echo $roundedRating; ?> / 5</span>
+                    <span style="font-size:14px; color:#777;">(<?php echo $reviewCount; ?> ratings)</span>
+                </div>
                 <div class="sold_left">
                     <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
                         <?php echo htmlspecialchars($productdetail['sold']); ?> sold
@@ -230,6 +278,75 @@ if (isset($_GET['id'])) {
             </div>
         </div>
     </div>
+
+    <?php
+    // ----- PAGINATION LOGIC -----
+    $reviewsPerPage = 5;
+    $totalReviews = count($product_review);
+    $totalPages = ceil($totalReviews / $reviewsPerPage);
+
+    $currentPage = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+    $currentPage = max(1, min($currentPage, $totalPages));
+
+    $startIndex = ($currentPage - 1) * $reviewsPerPage;
+    $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
+    ?>
+
+    <div class="review-section">
+        <h2>Ratings & Reviews of <?php echo htmlspecialchars($product_info['product_name']); ?></h2>
+
+        <?php if (!empty($currentReviews)): ?>
+            <?php foreach ($currentReviews as $rev): ?>
+                <div class="review-box">
+                    <div class="review-header">
+                        <!-- ⭐ RATING STARS -->
+                        <div class="review-stars">
+                            <?php
+                            $rating = (int) $rev['rating'];
+                            for ($i = 1; $i <= 5; $i++) {
+                                echo $i <= $rating
+                                    ? "<span class='star filled'>★</span>"
+                                    : "<span class='star empty'>☆</span>";
+                            }
+                            ?>
+                        </div>
+                        <span class="review-date"><?php echo htmlspecialchars($rev['created_at']); ?></span>
+                    </div>
+
+                    <div class="review-user">
+                        User: <?php
+                        $cusid = $rev['user_id'];
+                        $cusdet = $details->getUserData($cusid);
+                        // Capitalize first letter of each word
+                        $fullName = ucwords(strtolower($cusdet['full_name']));
+                        echo htmlspecialchars($fullName);
+                        ?>
+                        <span style="color: green; font-weight: bold; margin-left: 10px;">✔ Verified Purchase</span>
+                    </div>
+
+                    <p class="review-text"><?php echo nl2br(htmlspecialchars($rev['review_text'])); ?></p>
+                </div>
+
+                <hr class="review-divider">
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p>No reviews yet.</p>
+        <?php endif; ?>
+
+        <!-- Pagination Links -->
+        <?php if ($totalPages > 1): ?>
+            <div class="pagination">
+                <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+                    <a class="page-link <?php echo $p == $currentPage ? 'active' : ''; ?>"
+                        href="?id=<?php echo $product_id; ?>&page=<?php echo $p; ?>">
+                        <?php echo $p; ?>
+                    </a>
+                <?php endfor; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+
+
 
 
     <div class="flash">

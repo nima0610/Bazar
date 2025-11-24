@@ -32,6 +32,22 @@ class Details
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getProductReview($product_id)
+    {
+        $sql = "SELECT * FROM reviews WHERE product_id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$product_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getUserData($user_id)
+    {
+        $sql = "SELECT * FROM customers WHERE user_id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$user_id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC); // <-- return single row
+    }
+
     // Fetch similar products by category
     /*public function getSimilarProducts($category_id, $exclude_product_id)
     {
