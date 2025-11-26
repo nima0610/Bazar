@@ -384,30 +384,17 @@ $availableColors = array_keys($colors);
                 <!-- Variant UI -->
                 <?php if (!empty($availableSizes) || !empty($availableColors)): ?>
                     <div class="variant-section" style="margin-top:12px;">
+
                         <?php if (!empty($availableSizes)): ?>
                             <div class="variant-row sizes-row">
                                 <span class="variant-label">Size:</span>
                                 <div class="option-row" id="sizeOptions">
                                     <?php foreach ($availableSizes as $size): ?>
-                                        <?php
-                                        // Check if this size has any stock
-                                        $sizeStock = 0;
-                                        foreach ($variants as $v) {
-                                            if ($v['size'] == $size && (int) $v['stock'] > 0) {
-                                                $sizeStock = (int) $v['stock'];
-                                                break;
-                                            }
-                                        }
-                                        $class = $sizeStock <= 0 ? 'option-box out-of-stock' : 'option-box';
-                                        ?>
-                                        <div class="<?php echo $class; ?>" data-size="<?php echo htmlspecialchars($size); ?>"
+                                        <div class="option-box" data-size="<?php echo htmlspecialchars($size); ?>"
                                             onclick="selectVariantOption(this, 'size')">
                                             <?php echo htmlspecialchars($size); ?>
-                                            <?php if ($sizeStock <= 0)
-                                                echo ' (Out of stock)'; ?>
                                         </div>
                                     <?php endforeach; ?>
-
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -426,11 +413,11 @@ $availableColors = array_keys($colors);
                             </div>
                         <?php endif; ?>
 
-                        <!-- Hidden inputs set by JS -->
-                        <input type="hidden" name="selected_size" id="selected_size" value="">
-                        <input type="hidden" name="selected_color" id="selected_color" value="">
-                        <input type="hidden" name="selected_variant_id" id="selected_variant_id" value="">
+                        <input type="hidden" name="selected_size" id="selected_size">
+                        <input type="hidden" name="selected_color" id="selected_color">
+                        <input type="hidden" name="selected_variant_id" id="selected_variant_id">
                     </div>
+
                 <?php endif; ?>
 
                 <div class="action-buttons" style="margin-top:12px;">
@@ -494,23 +481,24 @@ $availableColors = array_keys($colors);
             resolveVariantId();
         }
         function resolveVariantId() {
-            const selSize = document.getElementById('selected_size').value || null;
-            const selColor = document.getElementById('selected_color').value || null;
+            const size = document.getElementById('selected_size').value || null;
+            const color = document.getElementById('selected_color').value || null;
+
             let found = null;
 
-            if (variants.length > 0) {
-                if (selSize && selColor) found = variants.find(v => v.size == selSize && v.color == selColor);
-                if (!found && selSize) found = variants.find(v => v.size == selSize);
-                if (!found && selColor) found = variants.find(v => v.color == selColor);
-
-                document.getElementById('selected_variant_id').value = found ? found.variant_id : '';
-            } else {
-                // No variants at all
-                document.getElementById('selected_variant_id').value = '';
+            if (size && color) {
+                found = variants.find(v => v.size == size && v.color == color);
+            } else if (size) {
+                found = variants.filter(v => v.size == size)[0];
+            } else if (color) {
+                found = variants.filter(v => v.color == color)[0];
             }
+
+            document.getElementById('selected_variant_id').value = found ? found.variant_id : '';
 
             updateRemainingStock();
         }
+
 
 
 
@@ -518,23 +506,22 @@ $availableColors = array_keys($colors);
             const size = document.getElementById('selected_size').value;
             const color = document.getElementById('selected_color').value;
 
-            if (variants.length === 0) {
-                // Show main product stock directly
-                document.getElementById('remaining_stock_text').innerHTML = "Remaining : <?php echo (int) $productdetail['product_stock']; ?>";
-                return;
-            }
-
             if (!size && !color) {
                 document.getElementById('remaining_stock_text').innerHTML = "Remaining : --";
                 return;
             }
 
-            const productId = "<?php echo $product_id; ?>";
-            fetch(`get_variant_stock.php?product_id=${productId}&size=${size}&color=${color}`)
-                .then(response => response.text())
-                .then(stock => {
-                    document.getElementById('remaining_stock_text').innerHTML = "Remaining : " + stock;
-                });
+            const match = variants.find(v =>
+                (!size || v.size == size) &&
+                (!color || v.color == color)
+            );
+
+            if (!match) {
+                document.getElementById('remaining_stock_text').innerHTML = "Remaining : 0";
+                return;
+            }
+
+            document.getElementById('remaining_stock_text').innerHTML = "Remaining : " + match.stock;
         }
 
         // Buy and Add to Cart handlers - unchanged behavior (Buy -> POST to purchase.php; Add to Cart -> goes to add_to_cart.php)
