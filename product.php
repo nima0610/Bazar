@@ -89,5 +89,19 @@ class Product
         $stmt->execute([$category_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getAvailableSizes($productId)
+    {
+        $stmt = $this->db->prepare("SELECT DISTINCT size FROM product_variants WHERE product_id = ? AND size IS NOT NULL");
+        $stmt->execute([$productId]);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    public function getAvailableColors($productId)
+    {
+        $stmt = $this->db->prepare("SELECT DISTINCT color FROM product_variants WHERE product_id = ? AND color IS NOT NULL");
+        $stmt->execute([$productId]);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
 }
 ?>

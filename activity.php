@@ -121,9 +121,12 @@ if (isset($_SESSION['user_id'])) {
         if (!empty($customerpurchases)) {
             foreach ($customerpurchases as $purchase):
 
-                $purchaseId = $purchase['id'];   // unique purchase ID
+                $purchaseId = $purchase['id'];       // unique purchase ID
                 $productId = $purchase['product_id'];
                 $cost = $purchase['cost'];
+                $quantity = $purchase['sold'];
+                $variantSize = $purchase['variant_size'] ?? null;
+                $variantColor = $purchase['variant_color'] ?? null;
 
                 // fetch images for this product
                 $productdetail = $customer->getPurchasedPic($productId);
@@ -135,7 +138,7 @@ if (isset($_SESSION['user_id'])) {
                     <!-- Edit / Cancel buttons -->
                     <div class="action-buttons">
                         <button class="edit-btn" data-purchase-id="<?php echo $purchaseId; ?>"
-                            data-quantity="<?php echo $purchase['sold']; ?>">
+                            data-quantity="<?php echo $quantity; ?>">
                             Edit Order
                         </button>
                         <button class="cancel-btn" data-purchase-id="<?php echo $purchaseId; ?>">Cancel Order</button>
@@ -167,7 +170,18 @@ if (isset($_SESSION['user_id'])) {
                         <h1><?php echo ucfirst($productdetail['product_name']); ?></h1>
                         <p><?php echo ucfirst($productdetail['description']); ?></p>
                         <p> Rs <?php echo $cost; ?></p>
-                        <p>Quantity: <?php echo $purchase['sold']; ?></p>
+                        <p>Quantity: <?php echo $quantity; ?></p>
+
+                        <?php if ($variantSize || $variantColor): ?>
+                            <p>
+                                <?php if ($variantSize): ?>
+                                    Size: <?php echo htmlspecialchars($variantSize); ?>
+                                <?php endif; ?>
+                                <?php if ($variantColor): ?>
+                                    Color: <?php echo htmlspecialchars($variantColor); ?>
+                                <?php endif; ?>
+                            </p>
+                        <?php endif; ?>
 
                         <div class="similarity">
                             <a href="your-link-here" class="similar-link">Find Similar</a>
@@ -183,139 +197,137 @@ if (isset($_SESSION['user_id'])) {
         }
         ?>
 
-    </div>
-
-    <!-- Swiper Initialization -->
-    <script>
-        document.querySelectorAll('.mySwiper').forEach(swiperEl => {
-            new Swiper(swiperEl, {
-                loop: true,
-                navigation: {
-                    nextEl: swiperEl.querySelector('.swiper-button-next'),
-                    prevEl: swiperEl.querySelector('.swiper-button-prev'),
-                },
-                pagination: {
-                    el: swiperEl.querySelector('.swiper-pagination'),
-                    clickable: true,
-                },
-                slidesPerView: 1,
-                spaceBetween: 10,
+        <!-- Swiper Initialization -->
+        <script>
+            document.querySelectorAll('.mySwiper').forEach(swiperEl => {
+                new Swiper(swiperEl, {
+                    loop: true,
+                    navigation: {
+                        nextEl: swiperEl.querySelector('.swiper-button-next'),
+                        prevEl: swiperEl.querySelector('.swiper-button-prev'),
+                    },
+                    pagination: {
+                        el: swiperEl.querySelector('.swiper-pagination'),
+                        clickable: true,
+                    },
+                    slidesPerView: 1,
+                    spaceBetween: 10,
+                });
             });
-        });
-    </script>
+        </script>
 
-    <!-- AJAX Cancel Order -->
-    <script>
-        document.querySelectorAll('.cancel-btn').forEach(button => {
-            button.addEventListener('click', function () {
-                const purchaseId = this.dataset.purchaseId;
+        <!-- AJAX Cancel Order -->
+        <script>
+            document.querySelectorAll('.cancel-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const purchaseId = this.dataset.purchaseId;
 
-                if (!confirm("Are you sure you want to cancel this order?")) return;
+                    if (!confirm("Are you sure you want to cancel this order?")) return;
 
-                fetch('delete_ajax.php', {
+                    fetch('delete_ajax.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ purchase_id: purchaseId })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Remove the product row
+                                const row = document.getElementById('purchase-' + purchaseId);
+                                row.remove();
+                                alert("Order canceled successfully!");
+                            } else {
+                                alert("Error: " + data.message);
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert("Something went wrong!");
+                        });
+                });
+            });
+
+
+        </script>
+
+        <!-- Edit Popup Modal -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <h2>Edit Order</h2>
+
+                <label>New Quantity:</label>
+                <input type="number" id="editQty" min="1">
+
+                <button id="saveEdit">Save</button>
+                <button id="closeEdit">Cancel</button>
+            </div>
+        </div>
+
+        <style>
+            .modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: none;
+                justify-content: center;
+                align-items: center;
+                background: rgba(0, 0, 0, 0.5);
+            }
+
+            .modal-content {
+                width: 300px;
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+            }
+        </style>
+
+        <script>
+
+            let currentPurchaseId = null;
+
+            // OPEN POPUP
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    currentPurchaseId = this.dataset.purchaseId;
+                    const qty = this.dataset.quantity;
+
+                    document.getElementById('editQty').value = qty;
+                    document.getElementById('editModal').style.display = "flex";
+                });
+            });
+
+            // CLOSE POPUP
+            document.getElementById('closeEdit').addEventListener('click', function () {
+                document.getElementById('editModal').style.display = "none";
+            });
+
+            // SAVE EDIT
+            document.getElementById('saveEdit').addEventListener('click', function () {
+                const newQty = document.getElementById('editQty').value;
+
+                fetch('update_purchase_ajax.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ purchase_id: purchaseId })
+                    body: JSON.stringify({
+                        purchase_id: currentPurchaseId,
+                        new_qty: newQty
+                    })
                 })
                     .then(res => res.json())
                     .then(data => {
                         if (data.success) {
-                            // Remove the product row
-                            const row = document.getElementById('purchase-' + purchaseId);
-                            row.remove();
-                            alert("Order canceled successfully!");
+                            alert("Order updated!");
+
+                            location.reload(); // reload page to update quantity
                         } else {
                             alert("Error: " + data.message);
                         }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert("Something went wrong!");
                     });
             });
-        });
-
-
-    </script>
-
-    <!-- Edit Popup Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <h2>Edit Order</h2>
-
-            <label>New Quantity:</label>
-            <input type="number" id="editQty" min="1">
-
-            <button id="saveEdit">Save</button>
-            <button id="closeEdit">Cancel</button>
-        </div>
-    </div>
-
-    <style>
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content {
-            width: 300px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-        }
-    </style>
-
-    <script>
-
-        let currentPurchaseId = null;
-
-        // OPEN POPUP
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                currentPurchaseId = this.dataset.purchaseId;
-                const qty = this.dataset.quantity;
-
-                document.getElementById('editQty').value = qty;
-                document.getElementById('editModal').style.display = "flex";
-            });
-        });
-
-        // CLOSE POPUP
-        document.getElementById('closeEdit').addEventListener('click', function () {
-            document.getElementById('editModal').style.display = "none";
-        });
-
-        // SAVE EDIT
-        document.getElementById('saveEdit').addEventListener('click', function () {
-            const newQty = document.getElementById('editQty').value;
-
-            fetch('update_purchase_ajax.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    purchase_id: currentPurchaseId,
-                    new_qty: newQty
-                })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert("Order updated!");
-
-                        location.reload(); // reload page to update quantity
-                    } else {
-                        alert("Error: " + data.message);
-                    }
-                });
-        });
-    </script>
+        </script>
 </body>
 
 </html>

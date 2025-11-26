@@ -7,67 +7,147 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $quantity = (int) ($_GET['quantity'] ?? 0);
 }
 
-
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $product_id = $_POST['product_id'] ?? null; //?? null =>exists and is not null, use its value; otherwise, use null
+    $product_id = $_POST['product_id'] ?? null;
     $quantity = (int) ($_POST['quantity'] ?? 0);
-    $d_price = (int) ($_POST['discounted_price'] ?? 0);
-    $d_percent = (int) ($_POST['discount_percent'] ?? 0);
-    $userID = $_SESSION['user_id'];
-    echo "<script>
-        console.log('Product ID:', " . json_encode($product_id) . ");
-        console.log('Quantity:', " . json_encode($quantity) . ");
-        console.log('D_price:', " . json_encode($d_price) . ");
-    </script>";
+    $d_price = (float) ($_POST['discounted_price'] ?? 0);
+    $d_percent = (float) ($_POST['discount_percent'] ?? 0);
+    $userID = $_SESSION['user_id'] ?? null;
+
+    // optional: values sent by JS when selecting options
+    $selected_variant_id = isset($_POST['selected_variant_id']) && $_POST['selected_variant_id'] !== '' ? (int) $_POST['selected_variant_id'] : null;
+    $selected_size = $_POST['selected_size'] ?? null;
+    $selected_color = $_POST['selected_color'] ?? null;
+
+    if (!$userID) {
+        header("Location: login.php");
+        exit;
+    }
+
     if ($product_id && $quantity > 0) {
         $db = new Database('localhost', 'bazar', 'root', '');
 
-        // 1️⃣ Check current stock
-        $sql = "SELECT product_stock FROM product WHERE product_id = ?";
+        // Load product basic info
+        $sql = "SELECT product_stock, seller_id FROM product WHERE product_id = ?";
         $stmt = $db->query($sql, [$product_id]);
-        $row = $stmt->fetch();
+        $productRow = $stmt->fetch();
 
+        if (!$productRow) {
+            header("Location: purchase.php?product_id={$product_id}&error=2"); // product not found
+            exit;
+        }
 
+        $product_stock = (int) $productRow['product_stock'];
+        $seller_id = (int) $productRow['seller_id'];
 
-        if ($row) {
-            $current_stock = (int) $row['product_stock'];
+        // Variant detection
+        $variantRow = null;
 
-            if ($current_stock >= $quantity) {
-                // 2️⃣ Enough stock → update
-                $updateSql = "
-    UPDATE product 
-    SET 
-        product_stock = product_stock - ?, 
-        sold = sold + ? 
-    WHERE product_id = ?
-";
+        if ($selected_variant_id) {
+            $stmt = $db->query("SELECT * FROM product_variants WHERE variant_id=? AND product_id=?", [$selected_variant_id, $product_id]);
+            $variantRow = $stmt->fetch();
+        } elseif ($selected_size || $selected_color) {
+            $query = "SELECT * FROM product_variants WHERE product_id = ?";
+            $params = [$product_id];
 
-                $insertSql = "
-    INSERT INTO purchase_history (
-        user_id,
-        product_id,
-        cost,
-        sold,
-        discount
-    ) VALUES (?, ?, ?, ?, ?)
-";
-                $db->query($insertSql, [$userID, $product_id, $d_price, $quantity, $d_percent]);
-                $db->query($updateSql, [$quantity, $quantity, $product_id]);
-                // ✅ Success message
-                header("Location: purchase.php?product_id=$product_id&success=1");
-                exit;
-            } else {
-                // ❌ Not enough stock
-                header("Location: purchase.php?product_id=$product_id&error=1");
-                exit;
+            if ($selected_size && $selected_color) {
+                $query .= " AND size=? AND color=? LIMIT 1";
+                $params[] = $selected_size;
+                $params[] = $selected_color;
+            } elseif ($selected_size) {
+                $query .= " AND size=? LIMIT 1";
+                $params[] = $selected_size;
+            } elseif ($selected_color) {
+                $query .= " AND color=? LIMIT 1";
+                $params[] = $selected_color;
             }
 
-
+            $stmt = $db->query($query, $params);
+            $variantRow = $stmt->fetch();
         }
+
+        // Determine available stock dynamically
+        if ($variantRow) {
+            $available_stock = (int) $variantRow['stock'];
+            if ($available_stock <= 0) {
+                header("Location: purchase.php?product_id={$product_id}&error=1"); // variant out of stock
+                exit;
+            }
+            if ($available_stock < $quantity) {
+                header("Location: purchase.php?product_id={$product_id}&error=1"); // not enough variant stock
+                exit;
+            }
+        } else {
+            // No variant selected, use main product stock
+            if ($product_stock <= 0) {
+                header("Location: purchase.php?product_id={$product_id}&error=1"); // product out of stock
+                exit;
+            }
+            if ($product_stock < $quantity) {
+                header("Location: purchase.php?product_id={$product_id}&error=1"); // not enough product stock
+                exit;
+            }
+        }
+
+
+        // Reduce stock
+        if ($variantRow) {
+            $db->query("UPDATE product_variants SET stock = stock - ? WHERE variant_id=?", [$quantity, $variantRow['variant_id']]);
+        }
+
+        $db->query("UPDATE product SET product_stock = product_stock - ?, sold = sold + ? WHERE product_id=?", [$quantity, $quantity, $product_id]);
+
+        // Insert into purchase_history
+        $total_cost = $d_price * $quantity;
+
+        try {
+            if ($variantRow) {
+                $insertSql = "INSERT INTO purchase_history 
+              (user_id, product_id, variant_size, variant_color, cost, sold, discount, seller_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+                $db->query($insertSql, [
+                    $userID,
+                    $product_id,
+                    $selected_size,   // store directly from POST
+                    $selected_color,  // store directly from POST
+                    $total_cost,
+                    $quantity,
+                    $d_percent,
+                    $seller_id
+                ]);
+            } else {
+                $insertSql = "INSERT INTO purchase_history 
+                              (user_id, product_id, cost, sold, discount, seller_id)
+                              VALUES (?, ?, ?, ?, ?, ?)";
+                $db->query($insertSql, [
+                    $userID,
+                    $product_id,
+                    $total_cost,
+                    $quantity,
+                    $d_percent,
+                    $seller_id
+                ]);
+            }
+        } catch (Exception $e) {
+            // fallback
+            $insertSql = "INSERT INTO purchase_history 
+                          (user_id, product_id, cost, sold, discount, seller_id)
+                          VALUES (?, ?, ?, ?, ?, ?)";
+            $db->query($insertSql, [
+                $userID,
+                $product_id,
+                $total_cost,
+                $quantity,
+                $d_percent,
+                $seller_id
+            ]);
+        }
+
+        header("Location: purchase.php?product_id={$product_id}&success=1");
+        exit;
     }
 }
-
 ?>
 
 
@@ -82,10 +162,11 @@ $user = "root";
 $pass = "";
 
 $db = new Database($host, $dbname, $user, $pass);
-
 $details = new Details($db);
-
 $customer = new CustomerDetails($db);
+
+// Ensure $product_id exists from GET (or POST earlier)
+$product_id = $product_id ?? ($_GET['product_id'] ?? null);
 
 if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
@@ -94,67 +175,92 @@ if (isset($_SESSION['user_id'])) {
     $product_seller = $product_info['seller_id'];
     $seller_info = $details->getSellerName($product_seller);
 
-    // Fetch district_id and location_id into separate variables
-    $seller_name = $seller_info['shop_name'];
-    $seller_location = $seller_info['shop_location'];
-    $district_id = $customer_info['district_id'];
-    $location_id = $customer_info['location_id'];
-    $customer_name = $customer_info['full_name'];
-    $customer_phone = $customer_info['phone_number'];
+    $seller_name = $seller_info['shop_name'] ?? '';
+    $seller_location = $seller_info['shop_location'] ?? '';
+    $district_id = $customer_info['district_id'] ?? null;
+    $location_id = $customer_info['location_id'] ?? null;
+    $customer_name = $customer_info['full_name'] ?? '';
+    $customer_phone = $customer_info['phone_number'] ?? '';
     $district_name = $customer->getDistrictName($district_id);
     $location_name = $customer->getLocationName($location_id);
-
-    echo "<script>
-    console.log('seller id is :', " . json_encode($product_seller) . ");
-      console.log('seller name is :', " . json_encode($seller_name) . ");
-            console.log('District ID:', " . json_encode($district_id) . ");
-            console.log('Location ID:', " . json_encode($location_id) . ");
-            console.log('District ID:', " . json_encode($district_name) . ");
-            console.log('Location ID:', " . json_encode($location_name) . ");
-            
-            
-            console.log('customer name:', " . json_encode($customer_name) . ");
-        </script>";
-
-
-
 } else {
     echo "NO CUSTOMER FOUND OF THIS USER ID";
+    exit;
 }
 
-
-
-if (isset($product_id)) {
-    $productt_id = $product_id;
-
-    // Example: show the product ID
-
-    $productdetail = $details->getProductDetails($productt_id);
+if ($product_id) {
+    $productdetail = $details->getProductDetails($product_id);
 } else {
     echo "No product selected.";
     exit;
 }
+
+// --- Fetch available variants (size/color) with stock > 0 ---
+$variantsStmt = $db->query("SELECT variant_id, size, color, stock FROM product_variants WHERE product_id = ?", [$product_id]);
+$variants = $variantsStmt->fetchAll(PDO::FETCH_ASSOC);
+// Build unique sizes and colors (preserving first occurrence)
+$sizes = [];
+$colors = [];
+foreach ($variants as $v) {
+    if (!empty($v['size'])) {
+        // use the size string as key
+        if (!array_key_exists($v['size'], $sizes)) {
+            $sizes[$v['size']] = true;
+        }
+    }
+    if (!empty($v['color'])) {
+        if (!array_key_exists($v['color'], $colors)) {
+            $colors[$v['color']] = true;
+        }
+    }
+}
+$availableSizes = array_keys($sizes);
+$availableColors = array_keys($colors);
 ?>
 
-
+<!doctype html>
 <html>
 
 <head>
-
-
-
     <title>Product Detail</title>
     <link rel="stylesheet" href="purchasestyle.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
-    <!-- Add Font Awesome for icon -->
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
-
-    <!-- Swiper JS -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+
+    <style>
+        /* Minimal inline styling for option boxes (you can move to your CSS) */
+        .option-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .option-box {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .option-box.selected {
+            border-color: #007bff;
+            background: #e7f1ff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.08);
+        }
+
+        .variant-label {
+            margin-right: 8px;
+            font-weight: 600;
+        }
+    </style>
 </head>
 
 <body>
@@ -176,149 +282,97 @@ if (isset($product_id)) {
         </div>
     </div>
 
-
     <div class="customer_detail">
-        <div class="map_img">
-            <img src="img/mapp.png" alt="Product Image" />
-        </div>
+        <div class="map_img"><img src="img/mapp.png" alt="map" /></div>
         <div class="user_detail">
             <div class="first_line">
-                <h2>
-                    <?php
-                    echo ucwords($customer_name);
-                    ?>
-                </h2>
-
-                <h3>
-                    <?php
-                    echo $customer_phone;
-                    ?>
-                </h3>
+                <h2><?php echo ucwords(htmlspecialchars($customer_name)); ?></h2>
+                <h3><?php echo htmlspecialchars($customer_phone); ?></h3>
             </div>
-
             <div class="second_line">
                 <h3>
                     <p>HOME</p>
                 </h3>
-                <h3>
-                    <?php
-                    echo $location_name, ",", $district_name;
-                    ?>
-                </h3>
+                <h3><?php echo htmlspecialchars($location_name . ', ' . $district_name); ?></h3>
             </div>
-
             <div class="third_line">
                 <h3>Collect your parcel from the nearest Bazar Pickup point with a reduced shipping fee.</h3>
             </div>
-
         </div>
     </div>
 
-    <script>
-        console.log("the user id is ", <?php echo $_SESSION['user_id']; ?>)
-        console.log("the user name is", <?php echo json_encode($_SESSION['username']); ?>);
-    </script>
-
     <?php if (isset($_GET['error']) && $_GET['error'] == 1): ?>
-        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
         <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Purchase Failed!',
-                text: '❌ Not enough stock available!',
-                confirmButtonText: 'OK'
-            });
+            Swal.fire({ icon: 'error', title: 'Purchase Failed!', text: '❌ Not enough stock available!', confirmButtonText: 'OK' });
         </script>
     <?php endif; ?>
 
-
-
     <div class="product_storage">
-
         <div class="seller_home">
-            <h2> <img src="img/shopp.png" alt="Shop Logo">
-                <?php
-                echo ucwords($seller_name) . "        - " . ucwords($seller_location);
-                ?>
-            </h2>
+            <h2><img src="img/shopp.png"
+                    alt="shop"><?php echo ucwords(htmlspecialchars($seller_name . ' - ' . $seller_location)); ?></h2>
         </div>
 
         <div class="product_image">
-
-            <!-- Swiper -->
-
             <div class="swiper mySwiper">
                 <div class="swiper-wrapper">
                     <?php
-                    // Example: get all product images from database as an array
-                    // Suppose your database has images stored in a comma-separated string
-                    $images = explode(',', $productdetail['product_image']); // product_images: "img1.jpg,img2.jpg,img3.jpg"
-                    
+                    $images = explode(',', $productdetail['product_image']);
                     foreach ($images as $image) {
-                        $image = trim($image); // remove whitespace
+                        $image = trim($image);
                         if (!empty($image)) {
-                            echo '<div class="swiper-slide">';
-                            echo '<img src="seller/' . htmlspecialchars($image) . '" alt="Product Image">';
-                            echo '</div>';
+                            echo '<div class="swiper-slide"><img src="seller/' . htmlspecialchars($image) . '" alt="Product Image"></div>';
                         }
                     }
                     ?>
                 </div>
-
-                <!-- Optional navigation buttons -->
                 <div class="swiper-button-next"><i class="fas fa-chevron-right"></i></div>
                 <div class="swiper-button-prev"><i class="fas fa-chevron-left"></i></div>
-
-                <!-- Optional pagination -->
                 <div class="swiper-pagination"></div>
             </div>
-
         </div>
+
         <div class="product_descript">
             <h1><?php echo htmlspecialchars($productdetail['product_name']); ?></h1>
             <div class="sold_left">
-                <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
-                    <?php echo htmlspecialchars($productdetail['sold']); ?> sold
-                </p>
-                <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
-                    Remaining : <?php echo htmlspecialchars($productdetail['product_stock']); ?>
+                <p style="color:blue;"><?php echo (int) $productdetail['sold']; ?> sold</p>
+                <p style="color:blue;" id="remaining_stock_text">
+                    Remaining :
+                    <?php
+                    if (!empty($availableSizes) || !empty($availableColors)) {
+                        echo "--"; // show empty until size/color is selected
+                    } else {
+                        echo (int) $productdetail['product_stock']; // normal product
+                    }
+                    ?>
                 </p>
             </div>
 
-            <hr style="border: 1px solid #000; width: 100%; text-align: center;">
-            <p style="color:red; font-size: 24px; position: relative; left: 10px;">
-                Price: Rs
-                <?php
-                $price = $productdetail['product_amount'];
-                $discount = $productdetail['discount_percent'];
-                $discounted_price = $price - ($price * $discount / 100);
-                echo htmlspecialchars(number_format($discounted_price, 2));
-                ?>
-            </p>
-            <div class="discount">
-                <p style="color:red; font-size: 20px;text-decoration: line-through;
-    color: gray;"> Rs <?php echo htmlspecialchars($productdetail['product_amount']); ?></p>
-                <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
-                    (<?php echo htmlspecialchars($productdetail['discount_percent']); ?>% discount)
-                </p>
+            <?php
+            $price = $productdetail['product_amount'];
+            $discount = $productdetail['discount_percent'];
+            $discounted_price = $price - ($price * $discount / 100);
+            ?>
+            <div id="price-info" data-price="<?php echo $price; ?>" data-discount="<?php echo $discount; ?>">
+                <?php if ((float) $discount > 0): ?>
+                    <p style="color:red;" id="final-price">Price: Rs <?php echo number_format($discounted_price, 2); ?></p>
+                    <div class="discount">
+                        <p style="text-decoration:line-through;color:gray;" id="original-price">Rs
+                            <?php echo number_format($price, 2); ?>
+                        </p>
+                        <p style="color:blue;">(<?php echo htmlspecialchars($discount); ?>% discount)</p>
+                    </div>
+                <?php else: ?>
+                    <p style="color:red;" id="final-price">Price: Rs <?php echo number_format($price, 2); ?></p>
+                <?php endif; ?>
             </div>
-            </h1>
 
             <form id="product-form" method="POST" action="purchase.php">
-
-                <!-- Discounted price inside form -->
-                <?php
-                $price = $productdetail['product_amount'];
-                $discount = $productdetail['discount_percent'];
-                $discounted_price = $price - ($price * $discount / 100);
-                ?>
-
-                <!-- Hidden input to POST discounted price -->
-                <input type="hidden" name="discounted_price" value="<?php echo $discounted_price; ?>">
-                <input type="hidden" name="discount_percent" value="<?php echo $discount; ?>">
+                <input type="hidden" name="discounted_price" value="<?php echo htmlspecialchars($discounted_price); ?>">
+                <input type="hidden" name="discount_percent" value="<?php echo htmlspecialchars($discount); ?>">
+                <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($product_id); ?>">
 
                 <div class="quantity-wrapper">
-                    <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($product_id); ?>">
                     <label>Quantity :</label>
                     <div class="quantity">
                         <button type="button" class="decrease">-</button>
@@ -326,92 +380,239 @@ if (isset($product_id)) {
                         <button type="button" class="increase">+</button>
                     </div>
                 </div>
-                <div class="action-buttons">
+
+                <!-- Variant UI -->
+                <?php if (!empty($availableSizes) || !empty($availableColors)): ?>
+                    <div class="variant-section" style="margin-top:12px;">
+                        <?php if (!empty($availableSizes)): ?>
+                            <div class="variant-row sizes-row">
+                                <span class="variant-label">Size:</span>
+                                <div class="option-row" id="sizeOptions">
+                                    <?php foreach ($availableSizes as $size): ?>
+                                        <?php
+                                        // Check if this size has any stock
+                                        $sizeStock = 0;
+                                        foreach ($variants as $v) {
+                                            if ($v['size'] == $size && (int) $v['stock'] > 0) {
+                                                $sizeStock = (int) $v['stock'];
+                                                break;
+                                            }
+                                        }
+                                        $class = $sizeStock <= 0 ? 'option-box out-of-stock' : 'option-box';
+                                        ?>
+                                        <div class="<?php echo $class; ?>" data-size="<?php echo htmlspecialchars($size); ?>"
+                                            onclick="selectVariantOption(this, 'size')">
+                                            <?php echo htmlspecialchars($size); ?>
+                                            <?php if ($sizeStock <= 0)
+                                                echo ' (Out of stock)'; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($availableColors)): ?>
+                            <div class="variant-row colors-row" style="margin-top:10px;">
+                                <span class="variant-label">Color:</span>
+                                <div class="option-row" id="colorOptions">
+                                    <?php foreach ($availableColors as $color): ?>
+                                        <div class="option-box" data-color="<?php echo htmlspecialchars($color); ?>"
+                                            onclick="selectVariantOption(this, 'color')">
+                                            <?php echo htmlspecialchars($color); ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Hidden inputs set by JS -->
+                        <input type="hidden" name="selected_size" id="selected_size" value="">
+                        <input type="hidden" name="selected_color" id="selected_color" value="">
+                        <input type="hidden" name="selected_variant_id" id="selected_variant_id" value="">
+                    </div>
+                <?php endif; ?>
+
+                <div class="action-buttons" style="margin-top:12px;">
                     <button type="button" class="buy-now">Buy Product</button>
                     <button type="button" class="add-to-cart">Add to Cart</button>
                 </div>
             </form>
+
             <?php if (isset($_GET['success'])): ?>
-                <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
                 <script>
                     Swal.fire({
                         icon: 'success',
                         title: 'Purchase Successful!',
-                        // text: '✅ Successfully purchased product!',
                         html: '✅ Successfully purchased product.<br>🛒 Check your list items!',
                         showConfirmButton: false,
                         timer: 4000
-                    }).then(() => {
-                        window.location.href = 'index.php';
-                    });
+                    }).then(() => { window.location.href = 'index.php'; });
                 </script>
             <?php endif; ?>
         </div>
-
     </div>
 
-
-
-
-
-
-
-
     <script>
-
+        // Swiper init
         var swiper = new Swiper(".mySwiper", {
-            loop: true,              // infinite loop
-            navigation: {            // arrows
-                nextEl: ".swiper-button-next",
-                prevEl: ".swiper-button-prev",
-            },
-            pagination: {            // pagination dots
-                el: ".swiper-pagination",
-                clickable: true,
-            },
-            slidesPerView: 1,        // one image at a time
-            spaceBetween: 10,        // space between slides
+            loop: true,
+            navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+            pagination: { el: ".swiper-pagination", clickable: true },
+            slidesPerView: 1,
+            spaceBetween: 10,
         });
 
-        const productImage = "<?php echo htmlspecialchars($productdetail['product_image']); ?>";
-        console.log("Product Image URL:", 'seller/' + productImage);
-
-
-
-
-
+        // Quantity buttons
         document.querySelector(".increase").addEventListener("click", function () {
             let input = document.querySelector(".quantity input");
             input.value = parseInt(input.value) + 1;
         });
-
         document.querySelector(".decrease").addEventListener("click", function () {
             let input = document.querySelector(".quantity input");
-            let value = parseInt(input.value);
-            if (value > 1) { // prevent going below 1
-                input.value = value - 1;
+            let v = parseInt(input.value);
+            if (v > 1) input.value = v - 1;
+        });
+
+        // Variant selection logic
+        // We keep a local cache of variants (variant rows) to look up variant_id when both size & color selected.
+        const variants = <?php echo json_encode($variants); ?>;
+
+        function selectVariantOption(element, type) {
+            const container = element.parentElement;
+            // Deselect siblings
+            container.querySelectorAll('.option-box').forEach(box => box.classList.remove('selected'));
+            element.classList.add('selected');
+
+            if (type === 'size') {
+                document.getElementById('selected_size').value = element.dataset.size || '';
+            } else if (type === 'color') {
+                document.getElementById('selected_color').value = element.dataset.color || '';
             }
-        });
+
+            // Try to resolve variant_id based on currently selected size/color
+            resolveVariantId();
+        }
+        function resolveVariantId() {
+            const selSize = document.getElementById('selected_size').value || null;
+            const selColor = document.getElementById('selected_color').value || null;
+            let found = null;
+
+            if (variants.length > 0) {
+                if (selSize && selColor) found = variants.find(v => v.size == selSize && v.color == selColor);
+                if (!found && selSize) found = variants.find(v => v.size == selSize);
+                if (!found && selColor) found = variants.find(v => v.color == selColor);
+
+                document.getElementById('selected_variant_id').value = found ? found.variant_id : '';
+            } else {
+                // No variants at all
+                document.getElementById('selected_variant_id').value = '';
+            }
+
+            updateRemainingStock();
+        }
 
 
-        document.querySelector('.buy-now').addEventListener('click', () => {
+
+        function updateRemainingStock() {
+            const size = document.getElementById('selected_size').value;
+            const color = document.getElementById('selected_color').value;
+
+            if (variants.length === 0) {
+                // Show main product stock directly
+                document.getElementById('remaining_stock_text').innerHTML = "Remaining : <?php echo (int) $productdetail['product_stock']; ?>";
+                return;
+            }
+
+            if (!size && !color) {
+                document.getElementById('remaining_stock_text').innerHTML = "Remaining : --";
+                return;
+            }
+
+            const productId = "<?php echo $product_id; ?>";
+            fetch(`get_variant_stock.php?product_id=${productId}&size=${size}&color=${color}`)
+                .then(response => response.text())
+                .then(stock => {
+                    document.getElementById('remaining_stock_text').innerHTML = "Remaining : " + stock;
+                });
+        }
+
+        // Buy and Add to Cart handlers - unchanged behavior (Buy -> POST to purchase.php; Add to Cart -> goes to add_to_cart.php)
+        document.querySelector('.buy-now').addEventListener('click', (e) => {
+            e.preventDefault();
             const form = document.getElementById('product-form');
-            // Optional: you can modify hidden input or validate here
-            form.action = 'purchase.php';   // target PHP file
-            form.submit();             // submit the form with POST
-        });
 
-        document.querySelector('.add-to-cart').addEventListener('click', () => {
-            const form = document.getElementById('product-form');
-            form.action = 'add_to_cart.php'; // separate PHP file for cart
+            if (variants.length > 0) {
+                // Product has variants
+                const selectedVariantId = document.getElementById('selected_variant_id').value;
+                if (!selectedVariantId) {
+                    alert('Please select a variant.');
+                    return;
+                }
+
+                const variant = variants.find(v => v.variant_id == selectedVariantId);
+                if (!variant || parseInt(variant.stock) <= 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Purchase Failed!',
+                        text: '❌ Selected variant is out of stock!'
+                    });
+                    return;
+                }
+            }
+
+            // Product has no variants OR variant checks passed
+            form.action = 'purchase.php';
+            form.method = 'POST';
             form.submit();
         });
 
+        // Grab the inputs
+        const quantityInput = document.querySelector(".quantity input");
+        const finalPriceEl = document.getElementById("final-price");
+        const originalPriceEl = document.getElementById("original-price");
+        const priceInfoEl = document.getElementById("price-info");
+
+        // Grab price data from PHP
+        const basePrice = parseFloat(priceInfoEl.dataset.price);
+        const discountPercent = parseFloat(priceInfoEl.dataset.discount) || 0;
+
+        function updatePrice() {
+            const qty = parseInt(quantityInput.value) || 1;
+            let discountedPrice = basePrice - (basePrice * discountPercent / 100);
+            let totalPrice = discountedPrice * qty;
+            finalPriceEl.innerText = `Price: Rs ${totalPrice.toFixed(2)}`;
+
+            if (discountPercent > 0 && originalPriceEl) {
+                let totalOriginal = basePrice * qty;
+                originalPriceEl.innerText = `Rs ${totalOriginal.toFixed(2)}`;
+            }
+        }
+
+        // Attach event listeners to quantity buttons and input change
+        document.querySelector(".increase").addEventListener("click", () => { updatePrice(); });
+        document.querySelector(".decrease").addEventListener("click", () => { updatePrice(); });
+        quantityInput.addEventListener("input", () => { updatePrice(); });
+
+        // Initial update
+        updatePrice();
+
+
+        document.querySelector('.add-to-cart').addEventListener('click', (e) => {
+            e.preventDefault();
+            const form = document.getElementById('product-form');
+            // add-to-cart expects GET in your earlier code (add_to_cart.php handles POST in other flow) — your existing app changed form.action via JS
+            form.method = 'GET';
+            form.action = 'add_to_cart.php';
+            // include variant info as query parameters: use hidden inputs (they are included) but because method=GET, browser will append them
+            form.submit();
+        });
+
+        // Hide any flash messages after a short time (unchanged)
         setTimeout(() => {
             const msg = document.getElementById('success-message');
             if (msg) msg.style.display = 'none';
         }, 2000);
-
     </script>
 
 </body>

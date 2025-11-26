@@ -45,18 +45,33 @@ class CustomerDetails
         return $stmt->fetch(PDO::FETCH_ASSOC); // fetch once and return
     }
 
-    public function getCustomerPurchases($userkoid)
+    public function getCustomerPurchases($user_id)
     {
-        $sql = "SELECT * FROM purchase_history WHERE user_id = ?";
-        $stmt = $this->db->query($sql, [$userkoid]);
+        $sql = "SELECT id, product_id, cost, sold, variant_size, variant_color
+        FROM purchase_history
+        WHERE user_id = ?";
+        $stmt = $this->db->query($sql, [$user_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
     public function getPurchasedPic($picture)
     {
         $sql = "SELECT * FROM product WHERE product_id = ?";
         $stmt = $this->db->query($sql, [$picture]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getCustomerCarts($user_id)
+    {
+        $sql = "SELECT * FROM cart WHERE user_id = ?";
+        $stmt = $this->db->query($sql, [$user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+    public function getAverageRating($product_id)
+    {
+        $stmt = $this->db->prepare("SELECT AVG(rating) as avg_rating FROM reviews WHERE product_id = ?");
+        $stmt->execute([$product_id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['avg_rating'] ?? 0; // return 0 if no reviews
     }
 }
 ?>

@@ -92,7 +92,7 @@ if ($isLoggedIn) {
         <div class="side_options">
             <a href="activity.php" class="activity-link">My Activity</a> <a href="login.php">Login</a>
             <a href="registration.php">Signup</a>
-            <a href="#">Help and Support</a>
+            <a href="cart.php">My Cart 🛒</a>
         </div>
         <div class="logo_main">
             <img src="assets/bazari.png">

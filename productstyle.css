@@ -136,7 +136,7 @@ z-index: 1000;
        max-width: 1200px; 
     width: 90%;    
     margin: 10px auto;
-    height: 350px;
+    height: 450px;
     background-color: #fff;
 }
 
@@ -368,7 +368,7 @@ z-index: 1000;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     padding: 10px;
-    gap: 25px;
+    gap: 65px;
     background-color: orange; /* parent container visible behind all rows */
   grid-auto-rows: 300px; /* each row is 300px tall */
 
@@ -407,7 +407,7 @@ z-index: 1000;
     object-fit: cover;       /* keep aspect ratio, crop if needed */
     object-position: center; /* center the image */
     display: block;          /* remove inline spacing issues */
-    
+    border-radius: 10px;
 }
 
 .grid-item .info-container {
@@ -533,7 +533,32 @@ z-index: 1000;
   background-color: #5c52b8; /* Daraz reddish-orange */
   color: rgb(255, 255, 255);
 }
+.variant-options {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
 
+.size-options, .color-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
+
+.option-box {
+    padding: 8px 12px;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s;
+}
+
+.option-box.selected {
+    border: 2px solid #007bff;
+    background-color: #e0f0ff;
+}
 .buy-now:hover {
   background-color: #2424d2;
 }

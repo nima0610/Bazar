@@ -166,7 +166,7 @@ z-index: 1000;
   display: grid;
   height: fit-content;
   width: 100%;
-  background-color: orange;
+  background-color: whitesmoke;
   padding-left: 15px;
     padding-right: 15px;
   
@@ -216,10 +216,11 @@ z-index: 1000;
 
 .grid-container {
     display: grid;
-    width: 100%;
+    width: 90%;
     padding: 10px;
-    gap: 25px;
+    gap: 65px;
     grid-auto-rows: 300px; /* each row is 300px tall */
+    margin: 0 auto; /* centers horizontally */
 }
 .dashboard-grid {
     grid-template-columns: repeat(4, 1fr); /* Dashboard: 2 columns */
@@ -254,6 +255,7 @@ z-index: 1000;
     object-fit: cover;       /* keep aspect ratio, crop if needed */
     object-position: center; /* center the image */
     display: block;          /* remove inline spacing issues */
+    border-radius: 10px;
 }
 
 .grid-item .info-container {
@@ -261,6 +263,8 @@ z-index: 1000;
     padding: 2px;
     box-sizing: border-box;
     margin-top: 10px;
+    margin-left: 10px;
+    gap: 10px;
 }
 
 .optioning {

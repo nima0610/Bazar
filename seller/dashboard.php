@@ -18,10 +18,10 @@ try {
     $categories = $category->getAllCategories();
 
     if ($_SERVER['REQUEST_METHOD'] === "POST") {
+
         $sellerId = $_POST['seller'] ?? '';
         $seller_details = $product->getSellerDetails($sellerId);
         $seller_id = $seller_details['seller_id'];
-
 
         $categoryName = $_POST['category'] ?? '';
         $productName = $_POST['product'] ?? '';
@@ -29,21 +29,22 @@ try {
         $quantity = $_POST['quantity'] ?? '';
         $description = $_POST['description'] ?? '';
         $uploadedFiles = $_FILES['images'];
-        $imageNames = [];
-        $uploadDir = 'uploads/products/'; // folder where files will be saved
 
+        $imageNames = [];
+        $uploadDir = 'uploads/products/';
 
         foreach ($uploadedFiles['tmp_name'] as $index => $tmpName) {
             if ($uploadedFiles['error'][$index] === UPLOAD_ERR_OK) {
                 $originalName = basename($uploadedFiles['name'][$index]);
                 $newFileName = uniqid() . '_' . $originalName;
-                $targetPath = $uploadDir . $newFileName;  // full path to move file
-                // Move file
+                $targetPath = $uploadDir . $newFileName;
+
                 if (move_uploaded_file($tmpName, $targetPath)) {
-                    $imageNames[] = $uploadDir . $newFileName; // store path for DB/display
+                    $imageNames[] = $uploadDir . $newFileName;
                 }
             }
         }
+
         $imagesCommaSeparated = implode(',', $imageNames);
 
         // Get category ID
@@ -53,8 +54,44 @@ try {
             throw new Exception("Invalid category selected.");
         }
 
-        // Add product (upload images + insert DB)
-        $results = $product->addProduct($seller_id, $categoryId, $productName, $amount, $quantity, $description, $imagesCommaSeparated);
+        // Add product
+        $results = $product->addProduct(
+            $seller_id,
+            $categoryId,
+            $productName,
+            $amount,
+            $quantity,
+            $description,
+            $imagesCommaSeparated
+        );
+
+        // GET NEW PRODUCT ID
+        $product_id = $results['product_id'];
+
+        // ------------------------------
+        // INSERT PRODUCT VARIANTS
+        // ------------------------------
+
+        if (isset($_POST['variant_size']) && isset($_POST['variant_color']) && isset($_POST['variant_stock'])) {
+
+            foreach ($_POST['variant_size'] as $index => $sizeId) {
+
+                $colorId = $_POST['variant_color'][$index] ?? null;
+                $stock = $_POST['variant_stock'][$index] ?? 0;
+
+                // Insert variant row
+                $db->query("
+               INSERT INTO product_variants (product_id, size, color, stock, price)
+                VALUES (?, ?, ?, ?, ?)
+            ", [
+                    $product_id,
+                    !empty($sizeId) ? $sizeId : null,
+                    !empty($colorId) ? $colorId : null,
+                    $stock,
+                    $amount  // same price as base product
+                ]);
+            }
+        }
 
         foreach ($results as $msg) {
             echo "<script>console.log(" . json_encode($msg) . ");</script>";
@@ -166,8 +203,6 @@ try {
                             </select>
                         </div>
 
-
-
                         <div class="form-row">
                             <label for="product">Product Name:</label>
                             <input type="text" name="product" id="product" required>
@@ -179,11 +214,9 @@ try {
                         </div>
 
                         <div class="form-row">
-                            <label for="quantity">Quantity:</label>
+                            <label for="quantity">Total Quantity:</label>
                             <input type="number" name="quantity" id="quantity" required>
                         </div>
-
-
 
                         <div class="form-row">
                             <label for="description">Description:</label>
@@ -195,60 +228,150 @@ try {
                             <input type="file" accept="image/*" name="images[]" id="images" multiple required>
                         </div>
 
+                        <!-- NEW LOGIC STARTS HERE -->
+                        <hr>
+                        <h3>Product Variants</h3>
 
+                        <div class="form-row">
+                            <label>Has Size Options?</label>
+                            <select id="hasSize" name="has_size">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+
+                        <div id="sizeOptions" style="display:none;">
+                            <label>Select Available Sizes:</label><br>
+                            <?php
+                            $sizes = ["S", "M", "L", "XL", "XXL"];
+                            foreach ($sizes as $s): ?>
+                                <label><input type="checkbox" name="sizes[]" value="<?= $s ?>"> <?= $s ?></label>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <div class="form-row">
+                            <label>Has Color Options?</label>
+                            <select id="hasColor" name="has_color">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+
+                        <div id="colorOptions" style="display:none;">
+                            <label>Select Available Colors:</label><br>
+                            <?php
+                            $colors = ["Black", "White", "Blue", "Red", "Green"];
+                            foreach ($colors as $c): ?>
+                                <label><input type="checkbox" name="colors[]" value="<?= $c ?>"> <?= $c ?></label>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <div id="variantTable"></div>
+                        <!-- NEW LOGIC ENDS HERE -->
 
                         <div class="form-row">
                             <input type="submit" value="Submit">
                         </div>
+
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
+            <script>
+                window.onload = function () {
+                    // Popup message logic
+                    var popup = document.getElementById('popupMessage');
+                    if (popup) {
+                        popup.classList.add('show');
+                        setTimeout(function () {
+                            popup.classList.remove('show');
+                        }, 2000);
+                    }
 
-    <script>
-        document.querySelectorAll('.sidebar-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                console.log("Button Clicked: " + button.innerText);
-                console.log("Target Section: " + button.getAttribute('data-target'));
+                    // Attach event listeners for Size and Color dropdowns
+                    document.getElementById("hasSize").addEventListener("change", function () {
+                        document.getElementById("sizeOptions").style.display = (this.value === "yes") ? "block" : "none";
+                        generateVariantTable();
+                    });
 
-                // Hide all content sections
-                document.querySelectorAll('.content-section').forEach(section => {
-                    section.classList.remove('active');
-                });
+                    document.getElementById("hasColor").addEventListener("change", function () {
+                        document.getElementById("colorOptions").style.display = (this.value === "yes") ? "block" : "none";
+                        generateVariantTable();
+                    });
 
-                // Show the target section
-                const target = button.getAttribute('data-target');
-                const targetSection = document.getElementById(target);
-                if (targetSection) {
-                    targetSection.classList.add('active');
-                } else {
-                    console.warn("No section found with id: " + target);
+                    // When seller selects size or color checkboxes
+                    document.querySelectorAll("#sizeOptions input, #colorOptions input").forEach(chk => {
+                        chk.addEventListener("change", generateVariantTable);
+                    });
+                };
+
+                // Variant table generator
+                function generateVariantTable() {
+                    let sizeSelected = [...document.querySelectorAll("input[name='sizes[]']:checked")].map(i => i.value);
+                    let colorSelected = [...document.querySelectorAll("input[name='colors[]']:checked")].map(i => i.value);
+
+                    let tableHTML = "<h3>Stock per Variant</h3><table border='1' cellpadding='8'>";
+                    tableHTML += "<tr><th>Size</th><th>Color</th><th>Stock</th></tr>";
+
+                    if (sizeSelected.length === 0 && colorSelected.length === 0) {
+                        document.getElementById("variantTable").innerHTML = "";
+                        return;
+                    }
+
+                    if (sizeSelected.length === 0) sizeSelected = ["-"];
+                    if (colorSelected.length === 0) colorSelected = ["-"];
+
+                    sizeSelected.forEach(size => {
+                        colorSelected.forEach(color => {
+                            tableHTML += `
+            <tr>
+                <td>${size}</td>
+                <td>${color}</td>
+                <td>
+                    <input type="hidden" name="variant_size[]" value="${size}">
+                    <input type="hidden" name="variant_color[]" value="${color}">
+                    <input type="number" name="variant_stock[]" required>
+                </td>
+            </tr>`;
+                        });
+                    });
+
+                    tableHTML += "</table>";
+                    document.getElementById("variantTable").innerHTML = tableHTML;
                 }
-            });
-        });
-    </script>
+            </script>
 
-    <script>
-        // Date Script
-        const today = new Date();
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        const formattedDate = today.toLocaleDateString(undefined, options);
-        document.getElementById("currentDate").innerText = formattedDate;
-    </script>
+            <script>
+                document.querySelectorAll('.sidebar-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        console.log("Button Clicked: " + button.innerText);
+                        console.log("Target Section: " + button.getAttribute('data-target'));
+
+                        // Hide all content sections
+                        document.querySelectorAll('.content-section').forEach(section => {
+                            section.classList.remove('active');
+                        });
+
+                        // Show the target section
+                        const target = button.getAttribute('data-target');
+                        const targetSection = document.getElementById(target);
+                        if (targetSection) {
+                            targetSection.classList.add('active');
+                        } else {
+                            console.warn("No section found with id: " + target);
+                        }
+                    });
+                });
+            </script>
+
+            <script>
+                // Date Script
+                const today = new Date();
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedDate = today.toLocaleDateString(undefined, options);
+                document.getElementById("currentDate").innerText = formattedDate;
+            </script>
 
 
-    <script>
-        window.onload = function () {
-            var popup = document.getElementById('popupMessage');
-            if (popup) {
-                popup.classList.add('show');
-                setTimeout(function () {
-                    popup.classList.remove('show');
-                }, 2000); // 2 seconds
-            }
-        };
-    </script>
 </body>
 
 </html>

@@ -17,15 +17,79 @@ $productnikal = new Product($db);
 
 
 
-if (isset($_GET['id'])) {
-    $product_id = $_GET['id'];
-    echo "<script>
- 
-      console.log('Product ID :', " . json_encode($product_id) . ");
- </script>";
+// ----- ADD TO CART HANDLER -----
+if (isset($_GET['add_cart'])) {
 
-    // Example: show the product ID
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: login.php");
+        exit;
+    }
+
+    $user_id = $_SESSION['user_id'];
+    $product_id = $_GET['product_id'];
+    $sql = "SELECT variant_id, size, color, stock 
+        FROM product_variants 
+        WHERE product_id = ? AND stock > 0";
+
+    $stmt = $db->query($sql, [$product_id]);
+    $variants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Create arrays for size and color dropdowns
+    $sizes = [];
+    $colors = [];
+
+    foreach ($variants as $v) {
+        if ($v['size'])
+            $sizes[$v['size_id']] = $v['size'];
+        if ($v['color'])
+            $colors[$v['color_id']] = $v['color'];
+    }
+
+
+    // Fetch available sizes and colors for this product
+    $availableSizes = $productnikal->getAvailableSizes($product_id); // returns array of sizes
+    $availableColors = $productnikal->getAvailableColors($product_id); // returns array of colors
+
+    // quantity default = 1
+    $quantity = isset($_GET['quantity']) ? (int) $_GET['quantity'] : 1;
+
+    // 1️⃣ Check if this product is already in cart for this user
+    $stmt = $db->prepare("SELECT * FROM cart WHERE user_id = ? AND product_id = ?");
+    $stmt->execute([$user_id, $product_id]);
+    $existing = $stmt->fetch();
+
+    if ($existing) {
+        // ✅ Product already in cart, just show success message
+        header("Location: product_details.php?id=$product_id&added=1");
+        exit;
+    }
+
+    // 2️⃣ Otherwise, insert into cart table
+    $stmt = $db->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
+    $stmt->execute([$user_id, $product_id, $quantity]);
+
+    // 3️⃣ Redirect with success message
+    header("Location: product_details.php?id=$product_id&added=1");
+    exit;
+}
+
+
+
+if (isset($_GET['id']) || isset($_GET['product_id'])) {
+    $product_id = isset($_GET['id']) ? $_GET['id'] : $_GET['product_id'];
+
+    // Fetch available sizes and colors for this product
+    $availableSizes = $productnikal->getAvailableSizes($product_id); // returns array of sizes
+    $availableColors = $productnikal->getAvailableColors($product_id); // returns array of colors
+
     $product_info = $details->getProductDetails($product_id);
+
+    if (!$product_info) {
+        echo "No product selected.";
+        exit;
+    }
+
+    // Now safe
     $product_seller = $product_info['seller_id'];
     $category_id = $product_info['category_id'];
 
@@ -55,6 +119,10 @@ if (isset($_GET['id'])) {
     echo "No product selected.";
     exit;
 }
+
+
+
+
 
 ?>
 
@@ -98,7 +166,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Add Font Awesome for icon -->
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-
+    <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
     <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
@@ -108,6 +176,26 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
 </head>
 
 <body>
+    <?php if (isset($_GET['added'])): ?>
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Added to Cart!',
+                html: '🛒 The product has been added to your cart.<br>✅ You can check your cart anytime.',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+
+            // Remove 'added' from URL immediately
+            const url = new URL(window.location.href);
+            url.searchParams.delete('added');
+            window.history.replaceState({}, document.title, url);
+        </script>
+    <?php endif; ?>
+
+
+
     <?php if (isset($_GET['success'])): ?>
         <div id="success-message" style="background:#d4edda;color:#155724;padding:10px;margin:10px 0;border-radius:5px;">
             ✅ Successfully purchased product!
@@ -132,6 +220,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
             <img src="assets/bazari.png">
         </div>
         <div class="search_bar">
+
             <form method="GET" action="search.php">
                 <input type="text" name="searcher" placeholder="Search Products in Bazar">
                 <button class="search-button">🔍</button>
@@ -228,7 +317,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
                 </div>
             </h1>
 
-            <form id="product-form" method="GET" action="purchase.php">
+            <form id="product-form" method="GET" action="product_details.php">
                 <div class="quantity-wrapper">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($product_id); ?>">
                     <!--
@@ -241,9 +330,42 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
                     !-->
 
                 </div>
+                <div class="variant-options">
+                    <?php if (!empty($availableSizes)): ?>
+                        <div class="sizes">
+                            <label><strong>Size:</strong></label>
+                            <div class="size-options">
+                                <?php foreach ($availableSizes as $size): ?>
+                                    <div class="option-box" data-value="<?= htmlspecialchars($size) ?>"
+                                        onclick="selectOption(this, 'size')">
+                                        <?= htmlspecialchars($size) ?>
+                                        <input type="radio" name="selected_size" value="<?= htmlspecialchars($size) ?>"
+                                            style="display:none;">
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($availableColors)): ?>
+                        <div class="colors" style="margin-top:10px;">
+                            <label><strong>Color:</strong></label>
+                            <div class="color-options">
+                                <?php foreach ($availableColors as $color): ?>
+                                    <div class="option-box" data-value="<?= htmlspecialchars($color) ?>"
+                                        onclick="selectOption(this, 'color')">
+                                        <?= htmlspecialchars($color) ?>
+                                        <input type="radio" name="selected_color" value="<?= htmlspecialchars($color) ?>"
+                                            style="display:none;">
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
                 <div class="action-buttons">
                     <button class="buy-now">Buy Product</button>
-                    <button class="add-to-cart">Add to Cart</button>
+                    <button type="submit" name="add_cart" id="add-to-cart" class="add-to-cart">Add to Cart</button>
                 </div>
             </form>
 
@@ -452,6 +574,19 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
     <script>
 
 
+
+        function selectOption(element, type) {
+            // Deselect all options of this type
+            const container = element.parentElement;
+            container.querySelectorAll('.option-box').forEach(box => box.classList.remove('selected'));
+            container.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
+
+            // Select clicked option
+            element.classList.add('selected');
+            const input = element.querySelector('input[type="radio"]');
+            input.checked = true;
+        }
+
         var swiper = new Swiper(".mySwiper", {
             loop: true,              // infinite loop
             navigation: {            // arrows
@@ -504,11 +639,8 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
             form.submit();
         });
 
-        document.querySelector('.add-to-cart').addEventListener('click', () => {
-            const form = document.getElementById('product-form');
-            form.action = 'add_to_cart.php'; // separate PHP file for cart
-            form.submit();
-        });
+
+
 
         setTimeout(() => {
             const msg = document.getElementById('success-message');

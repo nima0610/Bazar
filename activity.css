@@ -84,6 +84,16 @@ body{
     background-color: #d5d5d5;
 }
 
+.title_part{
+  padding: 7px;
+  margin-bottom: 15px;
+}
+
+.title_part h1{
+  font-size: 45px;
+text-align: center;
+}
+
 .logo_main{
   position: relative;
   top: -190%;
@@ -96,6 +106,53 @@ body{
 .logo_main img{
   width: 100%;
   height: 100%;
+}
+
+.purchase-actions {
+    display: flex;
+    gap: 15px;          /* space between buttons */
+    margin-top: 55px;   /* spacing from previous elements */
+    align-items: center; /* vertically align buttons */
+}
+
+/* Ensure both buttons have identical box model */
+.purchase-actions button,
+.purchase-actions .buy-now-btn,
+.purchase-actions .remove-cart-btn {
+    margin: 0;                /* remove any extra margin */
+    padding: 12px 25px;       /* same padding */
+    font-size: 18px;          /* same font size */
+    font-weight: bold;        /* same weight */
+    line-height: 1.2;         /* fixes height mismatch */
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Colors */
+.buy-now-btn {
+    background-color: #5c52b8;
+    color: #fff;
+}
+
+.buy-now-btn:hover {
+    background-color: #2424d2;
+    transform: scale(1.05);
+}
+
+.remove-cart-btn {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.remove-cart-btn:hover {
+    background-color: #a71d2a;
+    transform: scale(1.05);
+}
+
+/* Make form inline to match button */
+.buy-now-form {
+    display: inline-block;
 }
 
 @media (min-width: 1025px) {
@@ -270,6 +327,15 @@ body{
     margin-bottom: 30px;           /* Space between multiple products */
 }
 
+.divider_copy{
+  position: relative;
+    display: flex;                 /* Use flexbox */
+    flex-direction: row;           /* Horizontal layout */
+    gap: 20px;                     /* Space between image and info */
+    align-items: flex-start;       /* Align items at the top */
+    margin-bottom: 30px;           /* Space between multiple products */
+}
+
 
 .action-buttons {
     position: absolute;
@@ -328,4 +394,45 @@ body{
     font-size: 18px;
     
     /* arrow size */
+}
+/* Star rating container */
+.star-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;           /* spacing between stars */
+    margin-top: 5px;
+}
+
+/* Default empty star */
+.star {
+    font-size: 24px;    /* star size */
+    color: #ccc;        /* gray for empty star */
+    display: inline-block;
+    position: relative;
+}
+
+/* Filled star */
+.star.filled {
+    color: gold;        /* yellow for full star */
+}
+
+/* Half star using pseudo-element */
+.star.half {
+    color: #ccc;        /* base color */
+}
+
+.star.half::before {
+    content: '★';                /* the star character */
+    color: gold;                  /* half color */
+    position: absolute;
+    left: 0;
+    width: 50%;                   /* half width */
+    overflow: hidden;
+}
+
+/* Optional rating text next to stars */
+.rating-text {
+    font-size: 16px;
+    color: #333;
+    margin-left: 6px;
 }

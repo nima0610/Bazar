@@ -23,5 +23,10 @@ class Database
     {
         return $this->pdo->prepare($sql);
     }
+
+    public function lastInsertId()
+    {
+        return $this->pdo->lastInsertId();
+    }
 }
 ?>
