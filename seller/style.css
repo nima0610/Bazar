@@ -227,18 +227,34 @@ select {
         padding: 8px;
     }
 
-    .form-container {
-         position: absolute;
-    top: 56.7%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+   .form-container {
+    position: relative; /* remove absolute */
+    margin: 20px auto; /* centers horizontally and adds top/bottom spacing */
     max-width: 500px;
-    width: 100%;
+    width: 90%;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 8px;
     background-color: orange;
-    }
+    box-sizing: border-box; /* ensures padding included in width */
+}
+
+#variantTable table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#variantTable th, #variantTable td {
+    border: 1px solid #fff;
+    padding: 8px;
+    text-align: center;
+    background-color: rgba(255,255,255,0.2);
+    color: #fff;
+}
+
+#variantTable input[type="number"] {
+    width: 60px;
+}
 
     .form-row input[type="submit"] {
         width: auto;
