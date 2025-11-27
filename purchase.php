@@ -100,49 +100,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Insert into purchase_history
         $total_cost = $d_price * $quantity;
 
+        $delivery_address = $_SESSION['temp_location'] ?? ($location_name . ', ' . $district_name);
+        $address_type = isset($_SESSION['temp_location']) ? 'temporary' : 'permanent';
+
         try {
             if ($variantRow) {
                 $insertSql = "INSERT INTO purchase_history 
-              (user_id, product_id, variant_size, variant_color, cost, sold, discount, seller_id)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
+    (user_id, product_id, variant_size, variant_color, cost, sold, discount, seller_id, delivery_address, type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $db->query($insertSql, [
                     $userID,
                     $product_id,
-                    $selected_size,   // store directly from POST
-                    $selected_color,  // store directly from POST
+                    $selected_size,
+                    $selected_color,
                     $total_cost,
                     $quantity,
                     $d_percent,
-                    $seller_id
+                    $seller_id,
+                    $delivery_address,
+                    $address_type
                 ]);
             } else {
                 $insertSql = "INSERT INTO purchase_history 
-                              (user_id, product_id, cost, sold, discount, seller_id)
-                              VALUES (?, ?, ?, ?, ?, ?)";
+              (user_id, product_id, cost, sold, discount, seller_id, delivery_address, type)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 $db->query($insertSql, [
                     $userID,
                     $product_id,
                     $total_cost,
                     $quantity,
                     $d_percent,
-                    $seller_id
+                    $seller_id,
+                    $delivery_address,
+                    $address_type
                 ]);
             }
         } catch (Exception $e) {
             // fallback
             $insertSql = "INSERT INTO purchase_history 
-                          (user_id, product_id, cost, sold, discount, seller_id)
-                          VALUES (?, ?, ?, ?, ?, ?)";
+    (user_id, product_id, cost, sold, discount, seller_id, delivery_address, type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $db->query($insertSql, [
                 $userID,
                 $product_id,
                 $total_cost,
                 $quantity,
                 $d_percent,
-                $seller_id
+                $seller_id,
+                $delivery_address,
+                $address_type
             ]);
         }
+
+        unset($_SESSION['temp_location']);
 
         header("Location: purchase.php?product_id={$product_id}&success=1");
         exit;
@@ -216,7 +226,28 @@ foreach ($variants as $v) {
 }
 $availableSizes = array_keys($sizes);
 $availableColors = array_keys($colors);
+
 ?>
+
+
+
+<?php
+$product_review = $details->getProductReview($product_id);
+// Calculate average rating for this product
+$averageRating = 0;
+if (!empty($product_review)) {
+    $totalRating = 0;
+    $reviewCount = count($product_review);
+    foreach ($product_review as $rev) {
+        $totalRating += (float) $rev['rating'];
+    }
+    $averageRating = $totalRating / $reviewCount;
+}
+$roundedRating = round($averageRating, 1); // round to 1 decimal
+$reviewCount = count($product_review);
+?>
+
+
 
 <!doctype html>
 <html>
@@ -230,6 +261,10 @@ $availableColors = array_keys($colors);
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
 
     <style>
         /* Minimal inline styling for option boxes (you can move to your CSS) */
@@ -283,7 +318,9 @@ $availableColors = array_keys($colors);
     </div>
 
     <div class="customer_detail">
-        <div class="map_img"><img src="img/mapp.png" alt="map" /></div>
+        <div class="map_img" style="cursor:pointer;" onclick="setTemporaryLocation()">
+            <img src="img/mapp.png" alt="map" />
+        </div>
         <div class="user_detail">
             <div class="first_line">
                 <h2><?php echo ucwords(htmlspecialchars($customer_name)); ?></h2>
@@ -293,7 +330,12 @@ $availableColors = array_keys($colors);
                 <h3>
                     <p>HOME</p>
                 </h3>
-                <h3><?php echo htmlspecialchars($location_name . ', ' . $district_name); ?></h3>
+                <h3 id="customer_location_display">
+                    <?php
+                    // Show temporary location if session exists, otherwise default
+                    echo htmlspecialchars($_SESSION['temp_location'] ?? ($location_name . ', ' . $district_name));
+                    ?>
+                </h3>
             </div>
             <div class="third_line">
                 <h3>Collect your parcel from the nearest Bazar Pickup point with a reduced shipping fee.</h3>
@@ -334,6 +376,22 @@ $availableColors = array_keys($colors);
 
         <div class="product_descript">
             <h1><?php echo htmlspecialchars($productdetail['product_name']); ?></h1>
+            <div class="average-rating" style="display:flex; align-items:center; gap:5px; margin-top:5px;">
+                <?php
+                // Display 5 stars
+                for ($i = 1; $i <= 5; $i++) {
+                    if ($i <= floor($averageRating)) {
+                        echo "<span class='star filled'>★</span>"; // full star
+                    } elseif ($i - $averageRating < 1) {
+                        echo "<span class='star filled' style='clip-path: inset(0 " . (100 - (($averageRating - floor($averageRating)) * 100)) . "% 0 0);'>★</span>"; // partial star
+                    } else {
+                        echo "<span class='star empty'>☆</span>"; // empty star
+                    }
+                }
+                ?>
+                <span style="font-size:16px; color:#555;"><?php echo $roundedRating; ?> / 5</span>
+                <span style="font-size:14px; color:#777;">(<?php echo $reviewCount; ?> ratings)</span>
+            </div>
             <div class="sold_left">
                 <p style="color:blue;"><?php echo (int) $productdetail['sold']; ?> sold</p>
                 <p style="color:blue;" id="remaining_stock_text">
@@ -347,6 +405,7 @@ $availableColors = array_keys($colors);
                     ?>
                 </p>
             </div>
+            <hr>
 
             <?php
             $price = $productdetail['product_amount'];
@@ -524,6 +583,53 @@ $availableColors = array_keys($colors);
             document.getElementById('remaining_stock_text').innerHTML = "Remaining : " + match.stock;
         }
 
+        function setTemporaryLocation() {
+            Swal.fire({
+                title: 'Enter your temporary delivery location',
+                input: 'text',
+                inputPlaceholder: 'e.g., Kathmandu, Thamel',
+                showCancelButton: true,
+                confirmButtonText: 'Save',
+                cancelButtonText: 'Cancel',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Please enter a location!';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const tempLocation = result.value;
+
+                    // Send it to server via AJAX
+                    fetch('set_temp_location.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ location: tempLocation })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update the displayed location dynamically
+                                document.getElementById('customer_location_display').innerText = tempLocation;
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Location updated!',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                Swal.fire('Error', 'Failed to save location. Please try again.', 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire('Error', 'Something went wrong.', 'error');
+                        });
+                }
+            });
+        }
+
+
         // Buy and Add to Cart handlers - unchanged behavior (Buy -> POST to purchase.php; Add to Cart -> goes to add_to_cart.php)
         document.querySelector('.buy-now').addEventListener('click', (e) => {
             e.preventDefault();
@@ -601,6 +707,87 @@ $availableColors = array_keys($colors);
             if (msg) msg.style.display = 'none';
         }, 2000);
     </script>
+
+
+
+    <footer class="footer">
+        <div class="section__container footer__container">
+            <div class="footer__col">
+                <div class="footer__logo">
+                    <a href="#" class="logo">
+                        <img src="assets/bazari.png" alt="logo" />
+
+                    </a>
+                </div>
+                <p>
+                    "We're here to bring you the best online shopping experience with a wide range of products, great
+                    deals, and fast delivery. Stay tuned for updates, exclusive offers, and more. Shop with confidence
+                    on Daraz!"
+                </p>
+                <ul class="footer__socials">
+                    <li>
+                        <a href="#"><i class="ri-facebook-fill"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-twitter-fill"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-linkedin-fill"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-instagram-line"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-youtube-fill"></i></a>
+                    </li>
+                </ul>
+            </div>
+            <div class="footer__col">
+                <h4>Our Services</h4>
+                <ul class="footer__links">
+                    <li>
+                        Online Shopping
+                    </li>
+                    <li>
+                        Fast Delivery
+                    </li>
+                    <li>
+                        Cash on Delivery
+                    </li>
+                    <li>
+                        Flash Sale
+                    </li>
+                    <li>
+                        Testimonials
+                    </li>
+                </ul>
+            </div>
+
+            <div class="footer__col">
+                <h4>Contact</h4>
+                <ul class="footer__links">
+                    <li>
+                        <a href="#">
+                            <span><i class="ri-phone-fill"></i></span> +9825085032
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span><i class="ri-map-pin-fill"></i></span> Putalisadak, Kathmandu
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span><i class="ri-mail-fill"></i></span> nima19bit2021@kcc.edu.np
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer__bar">
+            Copyright ©. All rights reserved.
+        </div>
+    </footer>
 
 </body>
 

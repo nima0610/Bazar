@@ -170,7 +170,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
     <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
-
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet" />
     <!-- Swiper JS -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
 </head>
@@ -285,9 +285,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
                     <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
                         <?php echo htmlspecialchars($productdetail['sold']); ?> sold
                     </p>
-                    <p style="color:blue; font-size: 18px; position: relative; left: 10px;">
-                        Remaining : <?php echo htmlspecialchars($productdetail['product_stock']); ?>
-                    </p>
+
                 </div>
                 <hr style="border: 1px solid #000; width: 100%; text-align: center;">
                 <p style="color:red; font-size: 24px; position: relative; left: 10px;">
@@ -479,6 +477,22 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
         <div class="grid-container dashboard-grid">
             <?php foreach ($products as $product): ?>
 
+                <?php
+                $product_review = $details->getProductReview($product['product_id']);
+                // Calculate average rating for this product
+                $averageRating = 0;
+                if (!empty($product_review)) {
+                    $totalRating = 0;
+                    $reviewCount = count($product_review);
+                    foreach ($product_review as $rev) {
+                        $totalRating += (float) $rev['rating'];
+                    }
+                    $averageRating = $totalRating / $reviewCount;
+                }
+                $roundedRating = round($averageRating, 1); // round to 1 decimal
+                $reviewCount = count($product_review);
+                ?>
+
                 <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
 
                     <div class="image-container">
@@ -492,6 +506,23 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
                     </div>
                     <div class="info-container">
                         <h3><?php echo htmlspecialchars($product['product_name']); ?></h3>
+
+                        <div class="average-rating" style="display:flex; align-items:center; gap:5px; margin-top:5px;">
+                            <?php
+                            // Display 5 stars
+                            for ($i = 1; $i <= 5; $i++) {
+                                if ($i <= floor($averageRating)) {
+                                    echo "<span class='star filled'>★</span>"; // full star
+                                } elseif ($i - $averageRating < 1) {
+                                    echo "<span class='star filled' style='clip-path: inset(0 " . (100 - (($averageRating - floor($averageRating)) * 100)) . "% 0 0);'>★</span>"; // partial star
+                                } else {
+                                    echo "<span class='star empty'>☆</span>"; // empty star
+                                }
+                            }
+                            ?>
+                            <span style="font-size:16px; color:#555;"><?php echo $roundedRating; ?> / 5</span>
+                            <span style="font-size:14px; color:#777;">(<?php echo $reviewCount; ?> ratings)</span>
+                        </div>
 
 
 
@@ -527,6 +558,21 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
         <div class="grid-container dashboard-grid">
             <?php foreach ($product_sale as $product): ?>
 
+                <?php
+                $product_review = $details->getProductReview($product['product_id']);
+                // Calculate average rating for this product
+                $averageRating = 0;
+                if (!empty($product_review)) {
+                    $totalRating = 0;
+                    $reviewCount = count($product_review);
+                    foreach ($product_review as $rev) {
+                        $totalRating += (float) $rev['rating'];
+                    }
+                    $averageRating = $totalRating / $reviewCount;
+                }
+                $roundedRating = round($averageRating, 1); // round to 1 decimal
+                $reviewCount = count($product_review);
+                ?>
                 <div class="grid-item" data-id="<?php echo $product['product_id']; ?>" style="cursor:pointer;">
 
                     <div class="image-container">
@@ -540,6 +586,23 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
                     </div>
                     <div class="info-container">
                         <h3><?php echo htmlspecialchars($product['product_name']); ?></h3>
+
+                        <div class="average-rating" style="display:flex; align-items:center; gap:5px; margin-top:5px;">
+                            <?php
+                            // Display 5 stars
+                            for ($i = 1; $i <= 5; $i++) {
+                                if ($i <= floor($averageRating)) {
+                                    echo "<span class='star filled'>★</span>"; // full star
+                                } elseif ($i - $averageRating < 1) {
+                                    echo "<span class='star filled' style='clip-path: inset(0 " . (100 - (($averageRating - floor($averageRating)) * 100)) . "% 0 0);'>★</span>"; // partial star
+                                } else {
+                                    echo "<span class='star empty'>☆</span>"; // empty star
+                                }
+                            }
+                            ?>
+                            <span style="font-size:16px; color:#555;"><?php echo $roundedRating; ?> / 5</span>
+                            <span style="font-size:14px; color:#777;">(<?php echo $reviewCount; ?> ratings)</span>
+                        </div>
 
 
 
@@ -649,6 +712,86 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
 
     </script>
     <script src="app.js"></script>
+
+    <footer class="footer">
+        <div class="section__container footer__container">
+            <div class="footer__col">
+                <div class="footer__logo">
+                    <a href="#" class="logo">
+                        <img src="assets/bazari.png" alt="logo" />
+
+                    </a>
+                </div>
+                <p>
+                    "We're here to bring you the best online shopping experience with a wide range of products, great
+                    deals, and fast delivery. Stay tuned for updates, exclusive offers, and more. Shop with confidence
+                    on Daraz!"
+                </p>
+                <ul class="footer__socials">
+                    <li>
+                        <a href="#"><i class="ri-facebook-fill"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-twitter-fill"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-linkedin-fill"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-instagram-line"></i></a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-youtube-fill"></i></a>
+                    </li>
+                </ul>
+            </div>
+            <div class="footer__col">
+                <h4>Our Services</h4>
+                <ul class="footer__links">
+                    <li>
+                        Online Shopping
+                    </li>
+                    <li>
+                        Fast Delivery
+                    </li>
+                    <li>
+                        Cash on Delivery
+                    </li>
+                    <li>
+                        Flash Sale
+                    </li>
+                    <li>
+                        Testimonials
+                    </li>
+                </ul>
+            </div>
+
+            <div class="footer__col">
+                <h4>Contact</h4>
+                <ul class="footer__links">
+                    <li>
+                        <a href="#">
+                            <span><i class="ri-phone-fill"></i></span> +9825085032
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span><i class="ri-map-pin-fill"></i></span> Putalisadak, Kathmandu
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span><i class="ri-mail-fill"></i></span> nima19bit2021@kcc.edu.np
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer__bar">
+            Copyright ©. All rights reserved.
+        </div>
+    </footer>
+
 </body>
 
 </html>

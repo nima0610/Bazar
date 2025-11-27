@@ -183,9 +183,7 @@ if (isset($_SESSION['user_id'])) {
                             </p>
                         <?php endif; ?>
 
-                        <div class="similarity">
-                            <a href="your-link-here" class="similar-link">Find Similar</a>
-                        </div>
+
                     </div>
                 </div>
                 <hr>

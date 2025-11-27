@@ -1,13 +1,13 @@
 <?php
 require_once "database.php";
-
+require_once 'details_product.php';
 $host = "localhost";
 $dbname = "bazar";
 $user = "root";
 $pass = "";
 
 $db = new Database($host, $dbname, $user, $pass);
-
+$details = new Details($db);
 // Fetch all categories for dropdown
 $categories = $db->query("SELECT * FROM categories ORDER BY category_name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -44,6 +44,9 @@ if ($sort === 'price_asc') {
 // Execute query
 $result = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
+
+
 <!DOCTYPE html>
 <html>
 
@@ -132,6 +135,24 @@ $result = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
             <?php if (!empty($result)): ?>
 
                 <?php foreach ($result as $row): ?>
+
+                    <?php
+
+
+                    $product_review = $details->getProductReview($row['product_id']);
+                    // Calculate average rating for this product
+                    $averageRating = 0;
+                    if (!empty($product_review)) {
+                        $totalRating = 0;
+                        $reviewCount = count($product_review);
+                        foreach ($product_review as $rev) {
+                            $totalRating += (float) $rev['rating'];
+                        }
+                        $averageRating = $totalRating / $reviewCount;
+                    }
+                    $roundedRating = round($averageRating, 1); // round to 1 decimal
+                    $reviewCount = count($product_review);
+                    ?>
                     <?php
                     $folder = 'seller/uploads/products/';
                     $filename = basename($row['product_image']);
@@ -144,8 +165,25 @@ $result = $db->query($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
                                 alt="<?= htmlspecialchars($row['product_name']) ?>">
                         </div>
 
+
                         <div class="info-container">
                             <h3><?= htmlspecialchars($row['product_name']) ?></h3>
+                            <div class="average-rating" style="display:flex; align-items:center; gap:5px; margin-top:5px;">
+                                <?php
+                                // Display 5 stars
+                                for ($i = 1; $i <= 5; $i++) {
+                                    if ($i <= floor($averageRating)) {
+                                        echo "<span class='star filled'>★</span>"; // full star
+                                    } elseif ($i - $averageRating < 1) {
+                                        echo "<span class='star filled' style='clip-path: inset(0 " . (100 - (($averageRating - floor($averageRating)) * 100)) . "% 0 0);'>★</span>"; // partial star
+                                    } else {
+                                        echo "<span class='star empty'>☆</span>"; // empty star
+                                    }
+                                }
+                                ?>
+                                <span style="font-size:16px; color:#555;"><?php echo $roundedRating; ?> / 5</span>
+                                <span style="font-size:14px; color:#777;">(<?php echo $reviewCount; ?> ratings)</span>
+                            </div>
 
                             <?php
                             $price = $row['product_amount'];
