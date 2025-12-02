@@ -19,5 +19,15 @@ class Database
         $stmt->execute($params);
         return $stmt;
     }
+
+    public function getPDO()
+    {
+        return $this->pdo;
+    }
+
+    public function getConnection()
+    {
+        return $this->pdo;
+    }
 }
 ?>

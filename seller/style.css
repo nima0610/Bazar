@@ -33,6 +33,9 @@ html, body {
     transition: opacity 0.5s ease-in-out;
     z-index: 9999;
 }
+.popup-message.success {
+  background: #28a745;
+}
 .popup-message.show {
     opacity: 1;
 }
@@ -213,6 +216,18 @@ html, body {
         font-weight: bold;
     }
 
+.form-container {
+  max-width: 500px;
+  width: 100%;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: orange;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .form-row select{
     flex: 1;
         padding: 8px;
@@ -227,17 +242,6 @@ select {
         padding: 8px;
     }
 
-   .form-container {
-    position: relative; /* remove absolute */
-    margin: 20px auto; /* centers horizontally and adds top/bottom spacing */
-    max-width: 500px;
-    width: 90%;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: orange;
-    box-sizing: border-box; /* ensures padding included in width */
-}
 
 #variantTable table {
     width: 100%;
@@ -255,8 +259,320 @@ select {
 #variantTable input[type="number"] {
     width: 60px;
 }
-
+.form-row input,
+.form-row select {
+  flex: 1;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
     .form-row input[type="submit"] {
         width: auto;
         flex: 0;
     }
+
+    
+/* Product Grid */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.product-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* keeps full image inside container */
+  background-color: #f4f4f4; /* optional: shows light background for empty space */
+  transition: transform 0.3s;
+}
+
+
+.product-image img:hover {
+  transform: scale(1.05);
+}
+
+.product-details {
+  padding: 10px 15px;
+}
+
+.product-details h3 {
+  font-size: 1.1rem;
+  margin: 5px 0;
+}
+
+.product-details .price {
+  font-weight: bold;
+  color: #e53935;
+}
+
+.product-details .category,
+.product-details .stock {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.product-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.edit-btn,
+.delete-btn {
+  flex: 1;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.edit-btn {
+  background-color: #43a047;
+}
+
+.edit-btn:hover {
+  background-color: #2e7d32;
+}
+
+.delete-btn {
+  background-color: #e53935;
+}
+
+.delete-btn:hover {
+  background-color: #b71c1c;
+}
+
+/* Seller Profile */
+.profile-card {
+  display: flex;
+  gap: 50px;
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+}
+
+.profile-left {
+  flex: 2;
+}
+
+.profile-left .form-row {
+  margin-bottom: 20px;
+}
+
+.profile-left label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.profile-left input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fafafa;
+}
+
+.btn-submit {
+  background: #f57224;
+  color: #fff;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-submit:hover {
+  background: #d85f18;
+}
+
+/* Orders Section */
+/* Scope everything to orders section */
+#orders .order-tabs {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+/* Default button styling */
+.order-tabs .tab-btn {
+  flex: 1 1 200px;
+  padding: 12px 0;
+  font-size: 16px;
+  border: 1 px solid #ccc;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+  margin-right: 10px;
+  transition: 0.3s;
+}
+
+/* Each button with different color */
+.order-tabs .tab-btn[data-status="current"] {
+  background-color: yellow;
+}
+
+.order-tabs .tab-btn[data-status="shipped"] {
+  background-color: grey;
+  color: white;
+}
+
+.order-tabs .tab-btn[data-status="completed"] {
+  background-color: white;
+  border: 1px solid #ccc;
+}
+
+/* Hover effect – turn orange */
+.order-tabs .tab-btn:hover {
+  background-color: orange !important;
+  color: white;
+}
+
+/* Active / Clicked state */
+.order-tabs .tab-btn.active {
+  background-color: orange !important;
+  color: white;
+}
+
+#orders .orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+}
+
+#orders .orders-table th,
+#orders .orders-table td {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+#orders .orders-table th {
+  background-color: orange;
+}
+
+#orders .orders-table tr:nth-child(even) {
+  background-color: white;
+}
+
+#orders .product-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#orders .product-cell img.order-img {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+/* Responsive table for small screens */
+@media screen and (max-width: 768px) {
+  #orders .order-tabs .tab-btn {
+    flex: 1 1 100%;
+  }
+  #orders .product-cell img.order-img {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Sales Chart Container */
+.sales-chart-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 20px auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.stat-card {
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-card h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #333;
+}
+
+.stat-card p {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+/* Daraz theme colors */
+.yellow {
+  background: #fdd835;
+}
+.grey {
+  background: #e0e0e0;
+}
+.white {
+  background: #ffffff;
+}
+.green {
+  background: #c8e6c9;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: red;
+  border-radius: 50%;
+  margin-left: 5px;
+  vertical-align: middle;
+  visibility: hidden; /* hide by default */
+}

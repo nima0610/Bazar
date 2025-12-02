@@ -1,6 +1,17 @@
 <?php
 session_start();
 require_once 'database.php';
+require_once 'details_product.php';
+require_once 'customer_details.php';
+require_once 'database.php';
+
+
+$host = "localhost";
+$dbname = "bazar";
+$user = "root";
+$pass = "";
+
+$db = new Database($host, $dbname, $user, $pass);
 
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $product_id = $_GET['product_id'] ?? null;
@@ -8,6 +19,17 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+
+    $userID = $_SESSION['user_id'] ?? null;
+    if ($userID) {
+        $customer = new CustomerDetails($db);
+        $customer_info = $customer->getCustomerDetails($userID);
+        $customer_phone = $customer_info['phone_number'] ?? '';
+        $district_name = $customer->getDistrictName($customer_info['district_id'] ?? null);
+        $location_name = $customer->getLocationName($customer_info['location_id'] ?? null);
+    }
+
     $product_id = $_POST['product_id'] ?? null;
     $quantity = (int) ($_POST['quantity'] ?? 0);
     $d_price = (float) ($_POST['discounted_price'] ?? 0);
@@ -99,15 +121,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Insert into purchase_history
         $total_cost = $d_price * $quantity;
-
         $delivery_address = $_SESSION['temp_location'] ?? ($location_name . ', ' . $district_name);
+        $delivery_phone = $customer_phone; // use customer phone displayed on page
         $address_type = isset($_SESSION['temp_location']) ? 'temporary' : 'permanent';
+
 
         try {
             if ($variantRow) {
                 $insertSql = "INSERT INTO purchase_history 
-    (user_id, product_id, variant_size, variant_color, cost, sold, discount, seller_id, delivery_address, type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    (user_id, product_id, variant_size, variant_color, cost, sold, discount, seller_id, delivery_address, delivery_phone, type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $db->query($insertSql, [
                     $userID,
                     $product_id,
@@ -118,12 +141,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $d_percent,
                     $seller_id,
                     $delivery_address,
+                    $delivery_phone,
                     $address_type
                 ]);
+
             } else {
                 $insertSql = "INSERT INTO purchase_history 
-              (user_id, product_id, cost, sold, discount, seller_id, delivery_address, type)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    (user_id, product_id, cost, sold, discount, seller_id, delivery_address, delivery_phone, type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $db->query($insertSql, [
                     $userID,
                     $product_id,
@@ -132,14 +157,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $d_percent,
                     $seller_id,
                     $delivery_address,
+                    $delivery_phone,
                     $address_type
                 ]);
+
             }
         } catch (Exception $e) {
-            // fallback
+
             $insertSql = "INSERT INTO purchase_history 
-    (user_id, product_id, cost, sold, discount, seller_id, delivery_address, type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    (user_id, product_id, cost, sold, discount, seller_id, delivery_address, delivery_phone, type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $db->query($insertSql, [
                 $userID,
                 $product_id,
@@ -148,8 +175,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $d_percent,
                 $seller_id,
                 $delivery_address,
+                $delivery_phone,
                 $address_type
             ]);
+
         }
 
         unset($_SESSION['temp_location']);
