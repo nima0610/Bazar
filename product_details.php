@@ -378,7 +378,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
                 <div class="seller_home">
 
                     <h1>Seller :</h1>
-                    <h2> <img src="img/shopp.png" alt="Shop Logo">
+                    <h2> <img src="img/shop.png" alt="Shop Logo">
                         <?php
                         echo ucwords($seller_name);
                         ?>
@@ -725,7 +725,7 @@ $currentReviews = array_slice($product_review, $startIndex, $reviewsPerPage);
                 <p>
                     "We're here to bring you the best online shopping experience with a wide range of products, great
                     deals, and fast delivery. Stay tuned for updates, exclusive offers, and more. Shop with confidence
-                    on Daraz!"
+                    on Bazar!"
                 </p>
                 <ul class="footer__socials">
                     <li>

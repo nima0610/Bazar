@@ -641,7 +641,7 @@ if ($isLoggedIn) {
                 <p>
                     "We're here to bring you the best online shopping experience with a wide range of products, great
                     deals, and fast delivery. Stay tuned for updates, exclusive offers, and more. Shop with confidence
-                    on Daraz!"
+                    on Bazar!"
                 </p>
                 <ul class="footer__socials">
                     <li>

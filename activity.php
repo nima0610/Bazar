@@ -61,6 +61,7 @@ if (isset($_SESSION['user_id'])) {
             <a href="login.php">Login</a>
             <a href="registration.php">Signup</a>
             <a href="index.php">Home</a>
+            <a href="purchase_history.php">Purchases</a>
         </div>
         <div class="logo_main">
             <img src="assets/bazari.png">
@@ -72,42 +73,8 @@ if (isset($_SESSION['user_id'])) {
             </form>
         </div>
     </div>
-    <div class="customer_detail">
-        <div class="map_img">
-            <img src="img/mapp.png" alt="Product Image" />
-        </div>
-        <div class="user_detail">
-            <div class="first_line">
-                <h2>
-                    <?php
-                    echo ucwords($customer_name);
-                    ?>
-                </h2>
 
-                <h3>
-                    <?php
-                    echo $customer_phone;
-                    ?>
-                </h3>
-            </div>
 
-            <div class="second_line">
-                <h3>
-                    <p>HOME</p>
-                </h3>
-                <h3>
-                    <?php
-                    echo $location_name, ",", $district_name;
-                    ?>
-                </h3>
-            </div>
-
-            <div class="third_line">
-                <h3>Collect your parcel from the nearest Bazar Pickup point with a reduced shipping fee.</h3>
-            </div>
-
-        </div>
-    </div>
 
     <script>
         console.log("the user id is ", <?php echo $_SESSION['user_id']; ?>)
@@ -117,9 +84,21 @@ if (isset($_SESSION['user_id'])) {
 
     <div class="main_container">
 
+        <h1 style="text-align: center; margin: 20px; padding: 2px;">Purchases</h1>
+
+        <hr>
+
         <?php
         if (!empty($customerpurchases)) {
             foreach ($customerpurchases as $purchase):
+
+                // Skip delivered orders entirely
+                if (strtolower($purchase['status']) === "delivered") {
+                    continue;
+                }
+
+
+
 
                 $purchaseId = $purchase['id'];       // unique purchase ID
                 $productId = $purchase['product_id'];
@@ -127,6 +106,8 @@ if (isset($_SESSION['user_id'])) {
                 $quantity = $purchase['sold'];
                 $variantSize = $purchase['variant_size'] ?? null;
                 $variantColor = $purchase['variant_color'] ?? null;
+                $status = $purchase['status'] ?? null;
+                $delivered = $purchase['delivered_at'] ?? null;
 
                 // fetch images for this product
                 $productdetail = $customer->getPurchasedPic($productId);
@@ -137,12 +118,25 @@ if (isset($_SESSION['user_id'])) {
 
                     <!-- Edit / Cancel buttons -->
                     <div class="action-buttons">
-                        <button class="edit-btn" data-purchase-id="<?php echo $purchaseId; ?>"
-                            data-quantity="<?php echo $quantity; ?>">
-                            Edit Order
-                        </button>
-                        <button class="cancel-btn" data-purchase-id="<?php echo $purchaseId; ?>">Cancel Order</button>
+                        <?php if (strtolower($status) === "placed"): ?>
+
+                            <button class="edit-btn" data-purchase-id="<?php echo $purchaseId; ?>"
+                                data-quantity="<?php echo $quantity; ?>"
+                                data-price="<?php echo $productdetail['product_amount']; ?>">
+                                Edit Order
+                            </button>
+
+                            <button class="cancel-btn" data-purchase-id="<?php echo $purchaseId; ?>">
+                                Cancel Order
+                            </button>
+
+                        <?php else: ?>
+                            <!-- Disabled buttons when NOT placed -->
+                            <button class="edit-btn" disabled style="opacity:0.5; cursor:not-allowed;">Edit Order</button>
+                            <button class="cancel-btn" disabled style="opacity:0.5; cursor:not-allowed;">Cancel Order</button>
+                        <?php endif; ?>
                     </div>
+
 
                     <div class="product_image">
                         <!-- Swiper container for this product -->
@@ -169,7 +163,11 @@ if (isset($_SESSION['user_id'])) {
                     <div class="purchase-card">
                         <h1><?php echo ucfirst($productdetail['product_name']); ?></h1>
                         <p><?php echo ucfirst($productdetail['description']); ?></p>
-                        <p> Rs <?php echo $cost; ?></p>
+                        <!-- <p> Rs <?php echo $cost; ?></p>  !-->
+
+                        <p>Your Amount: Rs <span class="total-amount" id="amount-<?php echo $purchaseId; ?>">
+                                <?php echo $productdetail['product_amount'] * $quantity; ?>
+                            </span></p>
                         <p>Quantity: <?php echo $quantity; ?></p>
 
                         <?php if ($variantSize || $variantColor): ?>
@@ -182,6 +180,15 @@ if (isset($_SESSION['user_id'])) {
                                 <?php endif; ?>
                             </p>
                         <?php endif; ?>
+
+                        <p>
+                            Delivery Status: <?= ucfirst($status) ?>
+
+                            <?php if (strtolower($status) === "delivered" && !empty($delivered)): ?>
+                                (<?= $delivered ?>)
+                            <?php endif; ?>
+                        </p>
+
 
 
                     </div>
@@ -325,6 +332,42 @@ if (isset($_SESSION['user_id'])) {
                         }
                     });
             });
+
+
+
+            document.getElementById('saveEdit').addEventListener('click', function () {
+                const newQty = document.getElementById('editQty').value;
+
+                const editBtn = document.querySelector(`.edit-btn[data-purchase-id="${currentPurchaseId}"]`);
+                const price = parseFloat(editBtn.dataset.price);
+
+                // Update UI immediately
+                const amountEl = document.getElementById("amount-" + currentPurchaseId);
+                const qtyEl = document.getElementById("qty-" + currentPurchaseId);
+
+                amountEl.textContent = price * newQty;
+                qtyEl.textContent = newQty;
+
+                // Close popup
+                document.getElementById('editModal').style.display = "none";
+
+                // Send update to DB
+                fetch('update_purchase_ajax.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        purchase_id: currentPurchaseId,
+                        new_qty: newQty
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.success) {
+                            alert("Error: " + data.message);
+                        }
+                    });
+            });
+
         </script>
 </body>
 

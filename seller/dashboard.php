@@ -118,9 +118,21 @@ if (isset($_POST['update_status_btn'])) {
         'seller_id' => $muji
     ]);
 
-    // Remember which tab was active (sent via POST)
-    $activeTab = $_POST['new_status'] === 'shipped' ? 'shipped' : ($_POST['new_status'] === 'delivered' ? 'completed' : 'current');
-    echo "<script>window.location='dashboard.php#orders?tab={$activeTab}';</script>";
+    $status = $_POST['new_status'];
+
+    if ($status === 'shipped') {
+        $activeTab = 'shipped';
+    } elseif ($status === 'delivered') {
+        $activeTab = 'completed';
+    } else {
+        $activeTab = 'current';
+    }
+
+    echo "<script>
+    window.location.href = 'dashboard.php?tab={$activeTab}#orders';
+</script>";
+
+
     exit;
 
 }
@@ -363,6 +375,16 @@ if ($lastMonthSale > 0) {
         .content-section.active {
             display: block;
         }
+
+        .discount-tag {
+            background: #9f9c9dff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 5px;
+            font-size: 13px;
+        }
     </style>
 </head>
 
@@ -378,9 +400,6 @@ if ($lastMonthSale > 0) {
         <div class="internal_box">
             <img src="../seller/img/bazari.png">
             <h2>Seller Dashboard</h2>
-            <form method="POST" action="dashboard.php">
-                <input type="text" name="searchbox" placeholder="🔍 Search for Products">
-            </form>
             <p id="currentDate"></p>
         </div>
     </div>
@@ -391,14 +410,16 @@ if ($lastMonthSale > 0) {
             <button class="sidebar-btn" data-target="orders">Orders</button>
             <button class="sidebar-btn" data-target="products">Products</button>
             <button class="sidebar-btn" data-target="sell">Sell Product</button>
-            <button class="sidebar-btn" data-target="customers">Customers</button>
+            <!-- <button class="sidebar-btn" data-target="customers">Customers</button> ?-->
             <button class="sidebar-btn" data-target="profile">Profile</button>
+
+
         </div>
 
         <div class="main_part">
             <div id="dashboard" class="content-section active">
 
-                <h2>Dashboard Overview</h2>
+                <h2 style="text-align: center; margin: 10px; padding:5px; font-weight: bold;">Dashboard Overview</h2>
 
                 <!-- Stats Cards -->
                 <div class="stats-container">
@@ -430,13 +451,13 @@ if ($lastMonthSale > 0) {
 
                 <br>
 
-                <h2>Sales Trend</h2>
+                <h2 style="text-align: center; margin: 10px; padding:5px; font-weight: bold;">Sales Trend</h2>
                 <div class="sales-chart-container">
                     <canvas id="salesChart"></canvas>
                 </div>
             </div>
             <div id="orders" class="content-section">
-                <h2>Orders</h2>
+                <h2 style="text-align: center; margin: 10px; padding:5px; font-weight: bold;">Orders</h2>
 
                 <!-- Tabs -->
                 <div class="order-tabs">
@@ -454,30 +475,70 @@ if ($lastMonthSale > 0) {
             </div>
 
 
-
             <!-- Products -->
             <div id="products" class="content-section">
                 <h2 style="margin-bottom: 20px;">Your Products</h2>
+
+                <!-- Category Filter -->
+                <?php
+                // Extract unique categories from sellerProducts
+                $uniqueCategories = [];
+                foreach ($sellerProducts as $prod) {
+                    $uniqueCategories[] = $prod['categories'];
+                }
+                $uniqueCategories = array_unique($uniqueCategories);
+                ?>
+                <div style="margin-bottom: 20px;">
+                    <label><strong>Filter by Category: </strong></label>
+                    <select id="categoryFilter" onchange="filterByCategory()">
+                        <option value="all">All</option>
+                        <?php foreach ($uniqueCategories as $cat): ?>
+                            <option value="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <?php if (empty($sellerProducts)): ?>
                     <p>No products added yet.</p>
                 <?php else: ?>
                     <div class="product-grid">
                         <?php foreach ($sellerProducts as $prod):
                             $images = explode(',', $prod['product_image']);
-                            $firstImage = $images[0] ?? "no_image.png"; ?>
-                            <div class="product-card">
-                                <div class="product-image"><img src="<?= htmlspecialchars($firstImage) ?>"></div>
+                            ?>
+                            <div class="product-card" data-category="<?= htmlspecialchars($prod['categories']) ?>">
+                                <!-- Image Slider -->
+                                <div class="product-images slider" id="slider<?= $prod['product_id'] ?>">
+                                    <?php foreach ($images as $index => $img): ?>
+                                        <img src="<?= htmlspecialchars($img) ?>" class="slide<?= $index === 0 ? ' active' : '' ?>"
+                                            alt="product">
+                                    <?php endforeach; ?>
+                                    <button class="prev" onclick="slidePrev(<?= $prod['product_id'] ?>)">&#10094;</button>
+                                    <button class="next" onclick="slideNext(<?= $prod['product_id'] ?>)">&#10095;</button>
+                                </div>
+
+                                <!-- Product Details -->
                                 <div class="product-details">
                                     <h3><?= htmlspecialchars($prod['product_name']) ?></h3>
                                     <p class="price">Rs. <?= htmlspecialchars($prod['product_amount']) ?></p>
                                     <p class="category"><?= htmlspecialchars($prod['categories']) ?></p>
                                     <p class="stock">Stock: <?= htmlspecialchars($prod['product_stock']) ?></p>
-                                    <div class="product-actions">
-                                        <a href="edit_product.php?product_id=<?= $prod['product_id'] ?>"
-                                            class="edit-btn">Edit</a>
-                                        <a href="delete_product.php?delete_id=<?= $prod['product_id'] ?>" class="delete-btn"
-                                            onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
-                                    </div>
+
+                                    <?php if (!empty($prod['discount_percent']) && $prod['discount_percent'] > 0): ?>
+                                        <p class="discount-tag" style="color: red; font-weight: bold;">
+                                            <?= $prod['discount_percent'] ?>% OFF
+                                        </p>
+                                        <p class="price" style="color:#e60000;font-size:18px;font-weight:bold;">
+                                            Discounted Price: Rs.
+                                            <?= $prod['product_amount'] - ($prod['product_amount'] * ($prod['discount_percent'] / 100)) ?>
+                                        </p>
+                                    <?php endif; ?>
+                                </div>
+
+
+                                <!-- Actions -->
+                                <div class="product-actions">
+                                    <a href="edit_product.php?product_id=<?= $prod['product_id'] ?>" class="edit-btn">Edit</a>
+                                    <a href="delete_product.php?delete_id=<?= $prod['product_id'] ?>" class="delete-btn"
+                                        onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -485,6 +546,8 @@ if ($lastMonthSale > 0) {
                 <?php endif; ?>
             </div>
 
+
+            <!--Sell Product-->
             <div id="sell" class="content-section">
                 <div class="form-container">
                     <form method="POST" action="dashboard.php" enctype="multipart/form-data">
@@ -587,13 +650,24 @@ if ($lastMonthSale > 0) {
                 <?php
                 // Fetch all orders for this seller
                 $stmt = $db->getConnection()->prepare("
-        SELECT ph.id as purchase_id, ph.user_id, ph.product_id, ph.cost, ph.status,
-               p.product_name, p.product_amount
-        FROM purchase_history ph
-        JOIN product p ON ph.product_id = p.product_id
-        WHERE ph.seller_id = :seller_id
-        ORDER BY ph.id DESC
-    ");
+    SELECT 
+        ph.id AS purchase_id,
+        ph.user_id,
+        ph.product_id,
+        ph.cost,
+        ph.status,
+        p.product_name,
+        p.product_amount,
+        c.full_name
+    FROM purchase_history ph
+    JOIN product p 
+        ON ph.product_id = p.product_id
+    JOIN customers c
+        ON ph.user_id = c.user_id
+    WHERE ph.seller_id = :seller_id
+    ORDER BY ph.id DESC
+");
+
                 $stmt->execute(['seller_id' => $muji]);
                 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -691,7 +765,7 @@ if ($lastMonthSale > 0) {
 
             <!-- Profile -->
             <div id="profile" class="content-section">
-                <h2>Seller Profile</h2>
+                <h2 style="text-align: center; margin: 10px; padding:5px; font-weight: bold;">Seller Profile</h2>
                 <div class="profile-card">
                     <div class="profile-left">
                         <form method="POST" action="">
@@ -731,36 +805,62 @@ if ($lastMonthSale > 0) {
                     generateVariantTable();
                 });
 
-                // When seller selects size or color checkboxes
                 document.querySelectorAll("#sizeOptions input, #colorOptions input").forEach(chk => {
                     chk.addEventListener("change", generateVariantTable);
                 });
 
-                if (window.location.hash === "#products") {
-                    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-                    const productsSection = document.getElementById("products");
-                    if (productsSection) productsSection.classList.add('active');
+                // Determine which section to show based on URL hash
+                let defaultSection = 'dashboard';
+                let defaultTab = 'current'; // for orders
+
+                if (window.location.hash) {
+                    const hash = window.location.hash; // e.g. "#orders?tab=shipped" or "#products"
+
+                    if (hash.startsWith('#orders')) {
+                        defaultSection = 'orders';
+                        if (hash.includes('?')) {
+                            const paramsString = hash.split('?')[1]; // "tab=shipped"
+                            const urlParams = new URLSearchParams(paramsString);
+                            const tab = urlParams.get('tab');
+                            if (tab) defaultTab = tab;
+                        }
+                    } else if (hash === '#products') {
+                        defaultSection = 'products';
+                    } else if (hash === '#profile') {
+                        defaultSection = 'profile';
+                    }
                 }
 
-                // Show profile section if URL hash
-                if (window.location.hash === "#profile") {
-                    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-                    const profileSection = document.getElementById("profile");
-                    if (profileSection) profileSection.classList.add('active');
-                }
+                // Hide all sections
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
 
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                        document.querySelectorAll('.orders-tab').forEach(t => t.classList.remove('active'));
+                // Show the target section
+                const targetSection = document.getElementById(defaultSection);
+                if (targetSection) targetSection.classList.add('active');
 
-                        btn.classList.add('active');
-                        const tabId = btn.getAttribute('data-tab');
-                        document.getElementById(tabId).classList.add('active');
+                // If it's orders, render the correct tab
+                if (defaultSection === 'orders') {
+                    renderOrdersTable(defaultTab);
+
+                    document.querySelectorAll('.tab-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.getAttribute('data-status') === defaultTab) {
+                            btn.classList.add('active');
+                        }
+
+                        // Add click event for tab buttons
+                        btn.addEventListener('click', () => {
+                            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+
+                            const status = btn.getAttribute('data-status');
+                            renderOrdersTable(status);
+                            window.location.hash = `#orders?tab=${status}`;
+                        });
                     });
-                });
-
+                }
             };
+
 
             // Variant table generator
             function generateVariantTable() {
@@ -903,13 +1003,40 @@ if ($lastMonthSale > 0) {
             <tr>
                 <td>#${o.id}</td>
                 <td class="product-cell">
-                    <img src="${img}" class="order-img">
-                    ${o.product_name}
+                    <div class="order-slider" id="orderSlider${o.id}">
+                        ${o.product_image.split(',').map((im, index) => `
+                            <img src="${im}" class="order-slide${index === 0 ? ' active' : ''}">
+                        `).join('')}
+                        <button class="order-prev" onclick="orderPrev(${o.id})">&#10094;</button>
+                        <button class="order-next" onclick="orderNext(${o.id})">&#10095;</button>
+                    </div>
+                   <span class="product-name">
+    ${o.product_name.charAt(0).toUpperCase() + o.product_name.slice(1)}
+</span>
+
+        <!-- ✅ New lines you asked for -->
+       <span class="variant-size" style="font-size: 12px; color: #555;">
+    Size: ${o.variant_size ?? 'N/A'}
+</span>
+
+<span class="variant-color" style="font-size: 12px; color: #555;">
+    Color: ${o.variant_color ?? 'N/A'}
+</span>
                 </td>
+
                 <td>${o.username}</td>
+                
                 <td>
                     <form method="POST" style="display:flex; gap:5px; flex-direction: column;">
 
+                       Name:<input type="text" name="name" value="${o.name
+                            ? o.name
+                                .trim()
+                                .split(' ')
+                                .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+                                .join(' ')
+                            : ''
+                        }" >
                         Phone No:<input type="text" name="delivery_phone" value="${o.delivery_phone ?? ''}" >
                         Address:<input type="text" name="delivery_address" value="${o.delivery_address ?? ''}">
                     
@@ -917,7 +1044,7 @@ if ($lastMonthSale > 0) {
                 </td>
                 <td>Rs. ${o.cost}</td>
                 <td>${o.status.charAt(0).toUpperCase() + o.status.slice(1)}</td>
-                <td>${orderDate}</td>
+                <td>${o.created_at}</td>
                 ${status === 'current' ? `
                 <td>
                     <form method="POST">
@@ -960,27 +1087,55 @@ if ($lastMonthSale > 0) {
             });
 
             window.addEventListener('load', () => {
-                let defaultStatus = 'current';
+                // Hide all sections initially
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
 
-                if (window.location.hash.startsWith('#orders')) {
-                    // Check if a tab is specified
-                    const hashParts = window.location.hash.split('?tab=');
-                    if (hashParts[1]) {
-                        defaultStatus = hashParts[1];
+                let hash = window.location.hash || '#dashboard';
+                let section = 'dashboard'; // default
+                let tab = 'current'; // default orders tab
+
+                if (hash.startsWith('#orders')) {
+                    section = 'orders';
+
+                    if (hash.includes('?')) {
+                        const params = new URLSearchParams(hash.split('?')[1]);
+                        tab = params.get('tab') || 'current';
+                    } else if (hash.includes('-')) {
+                        tab = hash.split('-')[1];
                     }
+                } else if (hash === '#products') {
+                    section = 'products';
+                } else if (hash === '#profile') {
+                    section = 'profile';
                 }
 
-                // Render the correct tab
-                renderOrdersTable(defaultStatus);
+                // Show the correct section
+                const targetSection = document.getElementById(section);
+                if (targetSection) targetSection.classList.add('active');
 
-                // Highlight the correct tab button
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.getAttribute('data-status') === defaultStatus) {
-                        btn.classList.add('active');
-                    }
-                });
+                // Orders: show correct tab
+                if (section === 'orders') {
+                    renderOrdersTable(tab);
+
+                    document.querySelectorAll('.tab-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.getAttribute('data-status') === tab) btn.classList.add('active');
+
+                        // Click handler
+                        btn.addEventListener('click', () => {
+                            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            const status = btn.getAttribute('data-status');
+                            renderOrdersTable(status);
+                            window.location.hash = `#orders?tab=${status}`;
+                        });
+                    });
+                }
             });
+
+
+
+
 
 
             // Show red dot if the section has orders
@@ -995,6 +1150,59 @@ if ($lastMonthSale > 0) {
             // Call it initially
             updateDots();
 
+
+            function filterByCategory() {
+                const selected = document.getElementById("categoryFilter").value.toLowerCase();
+                const products = document.querySelectorAll(".product-card");
+
+                products.forEach(card => {
+                    const category = card.getAttribute("data-category").toLowerCase();
+
+                    if (selected === "all" || category === selected) {
+                        card.style.display = "block";
+                    } else {
+                        card.style.display = "none";
+                    }
+                });
+            }
+
+            function slideNext(id) {
+                const slider = document.getElementById('slider' + id);
+                const slides = slider.querySelectorAll('img');
+                let currentIndex = Array.from(slides).findIndex(s => s.classList.contains('active'));
+                slides[currentIndex].classList.remove('active');
+                let nextIndex = (currentIndex + 1) % slides.length;
+                slides[nextIndex].classList.add('active');
+            }
+
+            function slidePrev(id) {
+                const slider = document.getElementById('slider' + id);
+                const slides = slider.querySelectorAll('img');
+                let currentIndex = Array.from(slides).findIndex(s => s.classList.contains('active'));
+                slides[currentIndex].classList.remove('active');
+                let prevIndex = (currentIndex - 1 + slides.length) % slides.length;
+                slides[prevIndex].classList.add('active');
+            }
+
+            function orderNext(id) {
+                const slider = document.getElementById(`orderSlider${id}`);
+                const slides = slider.querySelectorAll('.order-slide');
+                let index = [...slides].findIndex(i => i.classList.contains('active'));
+
+                slides[index].classList.remove('active');
+                index = (index + 1) % slides.length;
+                slides[index].classList.add('active');
+            }
+
+            function orderPrev(id) {
+                const slider = document.getElementById(`orderSlider${id}`);
+                const slides = slider.querySelectorAll('.order-slide');
+                let index = [...slides].findIndex(i => i.classList.contains('active'));
+
+                slides[index].classList.remove('active');
+                index = (index - 1 + slides.length) % slides.length;
+                slides[index].classList.add('active');
+            }
 
         </script>
 

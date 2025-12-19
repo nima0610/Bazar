@@ -28,6 +28,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $customer_phone = $customer_info['phone_number'] ?? '';
         $district_name = $customer->getDistrictName($customer_info['district_id'] ?? null);
         $location_name = $customer->getLocationName($customer_info['location_id'] ?? null);
+        $customer_name = $customer_info['full_name'] ?? '';
+
     }
 
     $product_id = $_POST['product_id'] ?? null;
@@ -129,8 +131,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         try {
             if ($variantRow) {
                 $insertSql = "INSERT INTO purchase_history 
-    (user_id, product_id, variant_size, variant_color, cost, sold, discount, seller_id, delivery_address, delivery_phone, type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    (user_id, product_id, variant_size, variant_color, cost, sold, discount, seller_id, delivery_address, delivery_phone, type, name)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $db->query($insertSql, [
                     $userID,
                     $product_id,
@@ -142,13 +144,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $seller_id,
                     $delivery_address,
                     $delivery_phone,
-                    $address_type
+                    $address_type,
+                    $customer_name
                 ]);
 
             } else {
                 $insertSql = "INSERT INTO purchase_history 
-    (user_id, product_id, cost, sold, discount, seller_id, delivery_address, delivery_phone, type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    (user_id, product_id, cost, sold, discount, seller_id, delivery_address, delivery_phone, type, name)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $db->query($insertSql, [
                     $userID,
                     $product_id,
@@ -158,15 +161,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $seller_id,
                     $delivery_address,
                     $delivery_phone,
-                    $address_type
+                    $address_type,
+                    $customer_name
                 ]);
 
             }
         } catch (Exception $e) {
 
             $insertSql = "INSERT INTO purchase_history 
-    (user_id, product_id, cost, sold, discount, seller_id, delivery_address, delivery_phone, type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    (user_id, product_id, cost, sold, discount, seller_id, delivery_address, delivery_phone, type, name)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $db->query($insertSql, [
                 $userID,
                 $product_id,
@@ -176,7 +180,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $seller_id,
                 $delivery_address,
                 $delivery_phone,
-                $address_type
+                $address_type,
+                $customer_name
             ]);
 
         }
@@ -751,7 +756,7 @@ $reviewCount = count($product_review);
                 <p>
                     "We're here to bring you the best online shopping experience with a wide range of products, great
                     deals, and fast delivery. Stay tuned for updates, exclusive offers, and more. Shop with confidence
-                    on Daraz!"
+                    on Bazar!"
                 </p>
                 <ul class="footer__socials">
                     <li>

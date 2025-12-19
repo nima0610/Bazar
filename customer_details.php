@@ -47,9 +47,10 @@ class CustomerDetails
 
     public function getCustomerPurchases($user_id)
     {
-        $sql = "SELECT id, product_id, cost, sold, variant_size, variant_color
-        FROM purchase_history
-        WHERE user_id = ?";
+        $sql = "SELECT id, product_id, cost, sold, variant_size, variant_color, status, delivered_at
+            FROM purchase_history
+            WHERE user_id = ?
+            ORDER BY id DESC";
         $stmt = $this->db->query($sql, [$user_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
